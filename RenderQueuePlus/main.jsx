@@ -1,8 +1,6 @@
-﻿var scriptFile = new File($.fileName);
-
 (function(thisObj) {
+  var scriptFile = new File($.fileName);
   var settingsPalette;
-
 
   var sep = (function() {
     if (File.fs === 'Windows') {
@@ -99,9 +97,9 @@
   function formatBytes(a, b) {
     if (0 === a) return '0 Byte';
     var c = 1024;
-      d = b + 1 || 3,
-      e = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'],
-      f = Math.floor(Math.log(a) / Math.log(c));
+    var d = b + 1 || 3;
+    var e = ['Bytes', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
+    var f = Math.floor(Math.log(a) / Math.log(c));
     return (a / Math.pow(c, f)).toPrecision(d) + ' ' + e[f];
   };
 
@@ -136,6 +134,8 @@
    * @param  {[type]} version  [description]
    */
   function importFootage(inPath, sequence, compName, version) {
+    app.beginUndoGroup('Import footage');
+
     var IO = new ImportOptions();
     IO.file = new File(inPath);
     IO.sequence = sequence;
@@ -156,14 +156,14 @@
     var i = app.project.rootFolder.items.length;
     var folderItem;
 
-    while (i--) {
+    while (i > 0) {
       folderItem = app.project.rootFolder.item(i);
       if (
         (folderItem instanceof FolderItem) &&
         (folderItem.name === 'prerenders')
       ) {
         rExists = true;
-        r = item;
+        r = folderItem;
         break;
       }
     }
@@ -203,8 +203,7 @@
       if (v.item(i).name === item.name) {
         Window.alert(
           'Footage already exists in the project.',
-          'Render Queue+',
-          undefined
+          'Render Queue+'
         );
         item.remove();
         item = v.item(i);
@@ -213,6 +212,7 @@
     }
 
     item.parentFolder = v;
+    app.endUndoGroup();
   }
 
   /**
@@ -1501,7 +1501,7 @@
        * Refreshes the data
        */
       function refreshButton_onClick() {
-        data = new Data;
+        data.setData();
 
         var listItem = w.findElement('listItem');
         listItem.removeAll();
@@ -1516,12 +1516,12 @@
         var cs = mainWindow.getSelection();
         mainWindow.clear();
         mainWindow.setlist(
-          data.compnames,
-          data.filenames,
-          data.rendered.frames,
-          data.missing.frames,
-          data.incomplete.frames,
-          data.rendered.sizes
+          data.compnames(),
+          data.filenames(),
+          data.rendered().frames,
+          data.missing().frames,
+          data.incomplete().frames,
+          data.rendered().sizes
         );
         mainWindow.setSelection(cs);
 
@@ -1539,6 +1539,12 @@
         if (listItem.selection) {
           for (var i = 0; i < selected.length; i++) {
             idx = selected[i].index;
+            if (data.item(index).exists.fsNames.length < 1) {
+              Window.alert(
+                'No files have been rendered yet.',
+                'Unable to import footage'
+              );
+            };
             try {
               importFootage(
                 data.item(index).exists.fsNames[idx],
@@ -2010,7 +2016,7 @@
           try {
             system.callSystem(cmd);
           } catch (e) {
-            alert(e);
+            Window.alert(e);
             return null;
           };
 
@@ -2071,7 +2077,7 @@
               return returnObject(stats);
             }
           } catch (e) {
-            alert(e);
+            Window.alert(e);
             stat = {
               date: 'n/a',
               time: 'n/a',
@@ -2089,7 +2095,10 @@
     return cls;
   }());
 
-
+  /**
+   * Singleton data class
+   * @return {[type]} [description]
+   */
   var Data = function() {
     var DATA;
 
@@ -2279,7 +2288,6 @@
           index = names.indexOf(name);
           file = files.item(index);
           fsName = omParentFsName + sep + name;
-
           if (index >= 0) {
             notmissingNames.push(name);
             notmissingFrames.push(parseInt(frame, 10));
@@ -2422,9 +2430,9 @@
     }
 
     var cls = function() {
-      this.items = function() {
+      this.setData = function() {
         var dataObj = {};
-        var dataObjs = [];
+        DATA = [];
 
         for (var i = 1; i <= app.project.renderQueue.numItems; i++) {
           var rqItem = app.project.renderQueue.item(i);
@@ -2513,55 +2521,14 @@
 
             dataObj.set = setData;
             dataObj.set(dataObj);
-            dataObjs.push(dataObj);
+            DATA.push(dataObj);
           }
         }
-        DATA = dataObjs;
-        return dataObjs;
-      }();
+      };
 
       this.item = function(index) {
         return DATA[index];
       };
-
-      this.files = function() {
-        var arr = [];
-        if (DATA.length === 0) {
-          arr = [];
-          return arr;
-        } else {
-          for (var i = 0; i < DATA.length; i++) {
-            arr.push(DATA[i].file);
-          }
-          return arr;
-        }
-      }();
-
-      this.rqItems = function() {
-        var arr = [];
-        if (DATA.length === 0) {
-          arr = [];
-          return arr;
-        } else {
-          for (var i = 0; i < DATA.length; i++) {
-            arr.push(DATA[i].rqItem);
-          }
-          return arr;
-        }
-      }();
-
-      this.omItems = function() {
-        var arr = [];
-        if (DATA.length === 0) {
-          arr = [];
-          return arr;
-        } else {
-          for (var i = 0; i < DATA.length; i++) {
-            arr.push(DATA[i].omItem);
-          }
-          return arr;
-        }
-      }();
 
       this.compnames = function() {
         var arr = [];
@@ -2574,33 +2541,7 @@
           }
           return arr;
         }
-      }();
-
-      this.rqindexes = function() {
-        var arr = [];
-        if (DATA.length === 0) {
-          arr = [];
-          return arr;
-        } else {
-          for (var i = 0; i < DATA.length; i++) {
-            arr.push(DATA[i].rqindex);
-          }
-          return arr;
-        }
-      }();
-
-      this.sequencenames = function() {
-        var arr = [];
-        if (DATA.length === 0) {
-          arr = ['No active output modules found.'];
-          return arr;
-        } else {
-          for (var i = 0; i < DATA.length; i++) {
-            arr.push(DATA[i].sequencename);
-          }
-          return arr;
-        }
-      }();
+      };
 
       this.filenames = function() {
         var arr = [];
@@ -2617,20 +2558,7 @@
           }
           return arr;
         }
-      }();
-
-      this.durations = function() {
-        var arr = [];
-        if (DATA.length === 0) {
-          arr = ['No active output modules found'];
-          return arr;
-        } else {
-          for (var i = 0; i < DATA.length; i++) {
-            arr.push(DATA[i].duration);
-          }
-          return arr;
-        }
-      }();
+      };
 
       this.rendered = function() {
         var returnObj = {
@@ -2653,7 +2581,7 @@
           }
           return returnObj;
         }
-      }();
+      };
 
       this.missing = function() {
         var returnObj = {
@@ -2684,7 +2612,7 @@
 
           return returnObj;
         }
-      }();
+      };
 
       this.incomplete = function() {
         var returnObj = {
@@ -2715,7 +2643,8 @@
 
           return returnObj;
         }
-      }();
+      };
+
       this.exists = function() {
         var returnObj = {
           frames: [],
@@ -2745,11 +2674,13 @@
 
           return returnObj;
         }
-      }();
+      };
     };
     return cls;
   }();
 
+  var data = new Data();
+  data.setData();
 
   var Pathcontrol = function(omItem, rqItem) {
     /**
@@ -2801,12 +2732,6 @@
 
 
     var cls = function(omItem, rqItem) {
-      var cls = this;
-
-      this.getVersionNumberFromString = function(s) {
-        return getVersionNumberFromString(s);
-      };
-
       this.setOMItem = function(inOMItem) {
         omItem = inOMItem;
         return omItem;
@@ -2836,7 +2761,7 @@
         var settings = omItem.getSettings(GetSettingsFormat.STRING_SETTABLE);
         var template = settings['Output File Info']['File Template'];
         var padding = getPadding(template);
-        var version = cls.getVersionNumberFromString(template);
+        var version = getVersionNumberFromString(template);
 
         if (!padding) {
           padding = 0;
@@ -2928,7 +2853,7 @@
             foldersOK = false;
             var text = 'Sorry, Unable to create render base folder:';
             text += '\n\n\n' + e;
-            Window.alert(text, 'Version Control: Error');
+            Window.alert(text, 'Versions Error');
           }
         } else {
           var text = 'The output base path has not been set.';
@@ -3199,19 +3124,19 @@
           }
         }
       },
-
       cleardropdown: function() {
         versionsDropdown.removeAll();
       },
 
       aerender: function(promptForFile) {
         var saved;
+        var bat;
+
         try {
           saved = app.project.file.exists;
         } catch (e) {
           saved = false;
         };
-
 
         if (listItem.selection && saved) {
           var index = cls.prototype.getSelection();
@@ -3310,18 +3235,18 @@
         return s;
       },
       refresh: function() {
-        data = new Data;
+        data.setData();
 
         var cs = cls.prototype.getSelection();
 
         cls.prototype.clear();
         cls.prototype.setlist(
-          data.compnames,
-          data.filenames,
-          data.rendered.frames,
-          data.missing.frames,
-          data.incomplete.frames,
-          data.rendered.sizes
+          data.compnames(),
+          data.filenames(),
+          data.rendered().frames,
+          data.missing().frames,
+          data.incomplete().frames,
+          data.rendered().sizes
         );
 
         settings.setbasepath();
@@ -3562,6 +3487,13 @@
     function importButton_onClick() {
       if (listItem.selection) {
         var index = listItem.selection.index;
+        if (data.item(index).exists.fsNames.length < 1) {
+          Window.alert(
+            'No files have been rendered yet.',
+            'Unable to import footage'
+          );
+          return;
+        };
         try {
           importFootage(
             data.item(index).exists.fsNames[0],
@@ -3581,19 +3513,19 @@
     function versionsIncrement_onClick() {
       var cs = cls.prototype.getSelection();
 
-      pathcontrol.setVersion(pathcontrol.getVersionNumberFromString() + 1);
+      pathcontrol.setVersion(pathcontrol.getVersion() + 1);
       pathcontrol.apply();
 
-      data = new Data;
+      data.setData();
 
       cls.prototype.clear();
       cls.prototype.setlist(
-        data.compnames,
-        data.filenames,
-        data.rendered.frames,
-        data.missing.frames,
-        data.incomplete.frames,
-        data.rendered.sizes
+        data.compnames(),
+        data.filenames(),
+        data.rendered().frames,
+        data.missing().frames,
+        data.incomplete().frames,
+        data.rendered().sizes
       );
 
       settings.setbasepath();
@@ -3610,16 +3542,16 @@
       pathcontrol.setVersion(1);
       pathcontrol.apply();
 
-      data = new Data;
+      data.setData();
 
       cls.prototype.clear();
       cls.prototype.setlist(
-        data.compnames,
-        data.filenames,
-        data.rendered.frames,
-        data.missing.frames,
-        data.incomplete.frames,
-        data.rendered.sizes
+        data.compnames(),
+        data.filenames(),
+        data.rendered().frames,
+        data.missing().frames,
+        data.incomplete().frames,
+        data.rendered().sizes
       );
 
       settings.setbasepath();
@@ -3636,17 +3568,18 @@
         return;
       }
 
+      var fsName = settings.getSetting('pathcontrol_fsName');
       if (versionsDropdown.selection.text === 'Set Version Control') {
         pathcontrol = new Pathcontrol(
           data.item(listItem.selection.index).omItem,
           data.item(listItem.selection.index).rqItem
         );
 
-        if (!pathcontrol.getVersionNumberFromString()) {
+
+        if (!pathcontrol.getVersion()) {
           pathcontrol.setVersion(1);
           cls.prototype.cleardropdown();
 
-          var fsName = settings.getSetting('pathcontrol_fsName');
 
           if (
             fsName[fsName.length - 1] == '/' ||
@@ -3666,7 +3599,7 @@
         }
       } else {
         pathcontrol.setVersion(
-          parseInt(versionsDropdown.selection.text.slice(1), 10)
+          getVersionNumberFromString(versionsDropdown.selection.text)
         );
 
         if (
@@ -3684,18 +3617,19 @@
         pathcontrol.apply();
       }
 
-      data = new Data;
+
+      data.setData();
 
       var s = mainWindow.getSelection();
       mainWindow.clear();
 
       mainWindow.setlist(
-        data.compnames,
-        data.filenames,
-        data.rendered.frames,
-        data.missing.frames,
-        data.incomplete.frames,
-        data.rendered.sizes
+        data.compnames(),
+        data.filenames(),
+        data.rendered().frames,
+        data.missing().frames,
+        data.incomplete().frames,
+        data.rendered().sizes
       );
 
       settings.setbasepath();
@@ -3724,7 +3658,7 @@
 
         cls.prototype.cleardropdown();
 
-        if (pathcontrol.getVersionNumberFromString()) {
+        if (pathcontrol.getVersion()) {
           var fsName = settings.getSetting('pathcontrol_fsName');
 
           if (
@@ -3788,14 +3722,6 @@
     controlsGroup1.spacing = 10;
     controlsGroup1.alignment = ['left', 'top'];
     controlsGroup1.preferredSize = [300, ''];
-
-
-    var controlsGroup2 = controlsGroup.add('group', [0, 0, 0, 0], {
-      name: 'controlsGroup2',
-    });
-    controlsGroup2.spacing = 5;
-    controlsGroup2.alignment = ['right', 'top'];
-    controlsGroup2.preferredSize = [300, ''];
 
     var aerenderButton = controlsGroup1.add(
       'iconbutton',
@@ -3922,10 +3848,18 @@
     UIsep.size = [UIsepWidth, elemSize];
     UIsep.enabled = false;
 
+
+    var controlsGroup2 = controlsGroup.add('group', [0, 0, 0, 0], {
+      name: 'controlsGroup2',
+    });
+    controlsGroup2.spacing = 5;
+    controlsGroup2.alignment = ['right', 'top'];
+    controlsGroup2.preferredSize = [300, ''];
+
     controlsGroup2.add(
       'statictext',
       undefined,
-      'Version Control:',
+      'Versions',
       {
         name: 'versionsLabel',
       }
@@ -4015,20 +3949,19 @@
     thisObj,
     settings.scriptname,
     6,
-    ['Composition', 'Path', 'ΔComplete', 'ΔMissing', 'ΔIncomplete', 'Size'],
+    ['Composition', 'Path', 'Complete', 'Missing', 'Incomplete', 'Size'],
     [250, 550, 100, 100, 100, 70]
   );
 
-  var data = new Data;
   var mainWindow = new MainWindow;
 
   mainWindow.setlist(
-    data.compnames,
-    data.filenames,
-    data.rendered.frames,
-    data.missing.frames,
-    data.incomplete.frames,
-    data.rendered.sizes
+    data.compnames(),
+    data.filenames(),
+    data.rendered().frames,
+    data.missing().frames,
+    data.incomplete().frames,
+    data.rendered().sizes
   );
 
   mainWindow.show();
