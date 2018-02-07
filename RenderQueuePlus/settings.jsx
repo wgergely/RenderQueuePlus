@@ -61,7 +61,7 @@ var Settings = function(thisObj) {
     var settings = {};
 
     settings.lastmodified = LAST_MODIFIED;
-    settings.version = VERSION
+    settings.version = VERSION;
     settings.name = SCRIPT_NAME;
     settings.author = AUTHOR;
     settings.email = EMAIL;

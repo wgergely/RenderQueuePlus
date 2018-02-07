@@ -137,6 +137,11 @@ Array.prototype.indexOf || (Array.prototype.indexOf = function(a, b) {
  * @param  {[type]} version  [description]
  */
 function importFootage(inPath, sequence, compName, version) {
+  /**
+   * private convenence function to import a footage item
+   * @param  {[type]} inPath [description]
+   * @return {[type]}        [description]
+   */
   function importFile(inPath) {
     var IO = new ImportOptions();
     IO.file = new File(inPath);
