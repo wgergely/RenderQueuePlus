@@ -12,55 +12,6 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
   var versionsReset;
   var versionsDropdown;
 
-  var MainWindow_StartRender = new File(
-    scriptFile.parent.absoluteURI + '/icons/MainWindow_StartRender.png'
-  );
-  var MainWindow_SaveRender = new File(
-    scriptFile.parent.absoluteURI + '/icons/MainWindow_SaveRender.png'
-  );
-  var redIcon = new File(
-    scriptFile.parent.absoluteURI + '/icons/redIcon.png'
-  );
-  var orangeIcon = new File(
-    scriptFile.parent.absoluteURI + '/icons/orangeIcon.png'
-  );
-  var greenIcon = new File(
-    scriptFile.parent.absoluteURI + '/icons/greenIcon.png'
-  );
-  var grayIcon = new File(
-    scriptFile.parent.absoluteURI + '/icons/grayIcon.png'
-  );
-  var redbinPNG = new File(
-    scriptFile.parent.absoluteURI + '/icons/redbin.png'
-  );
-  var MainWindow_PlayIcon = new File(
-    scriptFile.parent.absoluteURI + '/icons/MainWindow_PlayIcon.png'
-  );
-  var MainWindow_ImportIcon = new File(
-    scriptFile.parent.absoluteURI + '/icons/MainWindow_ImportIcon.png'
-  );
-  var MainWindow_RevealIcon = new File(
-    scriptFile.parent.absoluteURI + '/icons/MainWindow_RevealIcon.png'
-  );
-  var MainWindow_RefreshIcon = new File(
-    scriptFile.parent.absoluteURI + '/icons/MainWindow_RefreshIcon.png'
-  );
-  var MainWindow_FilesIcon = new File(
-    scriptFile.parent.absoluteURI + '/icons/MainWindow_FilesIcon.png'
-  );
-  var MainWindow_SettingsIcon = new File(
-    scriptFile.parent.absoluteURI + '/icons/MainWindow_SettingsIcon.png'
-  );
-  var MainWindow_IncrementIcon = new File(
-    scriptFile.parent.absoluteURI + '/icons/MainWindow_IncrementIcon.png'
-  );
-  var MainWindow_ResetIcon = new File(
-    scriptFile.parent.absoluteURI + '/icons/MainWindow_ResetIcon.png'
-  );
-  var MainWindow_Sep = new File(
-    scriptFile.parent.absoluteURI + '/icons/MainWindow_Sep.png'
-  );
-
   var cls = function() {
     this.createUI = function() {
       palette = thisObj instanceof Panel ? thisObj : new Window(
@@ -94,7 +45,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       aerenderButton = controlsGroup1.add(
         'iconbutton',
         undefined,
-        MainWindow_StartRender,
+        ICON_FILES.startRender,
         {
           name: 'aerenderButton',
           style: 'toolbutton',
@@ -108,7 +59,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       batchButton = controlsGroup1.add(
         'iconbutton',
         undefined,
-        MainWindow_SaveRender,
+        ICON_FILES.saveRender,
         {
           name: 'aerenderButton',
           style: 'toolbutton',
@@ -122,7 +73,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       UIsep = controlsGroup1.add(
         'iconbutton',
         undefined,
-        MainWindow_Sep, {
+        ICON_FILES.separator, {
           name: 'aerenderButton',
           style: 'toolbutton',
           enabled: false,
@@ -134,7 +85,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       playButton = controlsGroup1.add(
         'iconbutton',
         undefined,
-        MainWindow_PlayIcon,
+        ICON_FILES.playButton,
         {
           name: 'playButton',
           style: 'toolbutton',
@@ -149,7 +100,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       browseButton = controlsGroup1.add(
         'iconbutton',
         undefined,
-        MainWindow_RevealIcon,
+        ICON_FILES.revealButton,
         {
           name: 'browseButton',
           style: 'toolbutton',
@@ -162,7 +113,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       framesButton = controlsGroup1.add(
         'iconbutton',
         undefined,
-        MainWindow_FilesIcon,
+        ICON_FILES.framesButton,
         {
           name: 'framesButton',
           style: 'toolbutton',
@@ -175,7 +126,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       var refreshButton = controlsGroup1.add(
         'iconbutton',
         undefined,
-        MainWindow_RefreshIcon,
+        ICON_FILES.refreshButton,
         {
           name: 'refreshButton',
           style: 'toolbutton',
@@ -187,7 +138,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       var settingsButton = controlsGroup1.add(
         'iconbutton',
         undefined,
-        MainWindow_SettingsIcon, {
+        ICON_FILES.settingsButton, {
         name: 'settingsButton',
         style: 'toolbutton',
       });
@@ -195,7 +146,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       settingsButton.size = [elemSize, elemSize];
       settingsButton.alignment = 'right';
 
-      UIsep = controlsGroup1.add('iconbutton', undefined, MainWindow_Sep, {
+      UIsep = controlsGroup1.add('iconbutton', undefined, ICON_FILES.separator, {
         name: 'aerenderButton',
         style: 'toolbutton',
         enabled: false,
@@ -206,7 +157,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       UIsep = controlsGroup1.add(
         'iconbutton',
         undefined,
-        MainWindow_Sep,
+        ICON_FILES.separator,
         {
           name: 'aerenderButton',
           style: 'toolbutton',
@@ -251,7 +202,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       versionsIncrement = controlsGroup2.add(
         'iconbutton',
         undefined,
-        MainWindow_IncrementIcon,
+        ICON_FILES.incrementVersionButton,
         {
           name: 'versionsIncrement',
           style: 'toolbutton',
@@ -265,7 +216,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       versionsReset = controlsGroup2.add(
         'iconbutton',
         undefined,
-        MainWindow_ResetIcon, {
+        ICON_FILES.resetVersionButton, {
           name: 'versionsReset',
           style: 'toolbutton',
         }
@@ -278,7 +229,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       importButton = controlsGroup2.add(
         'iconbutton',
         undefined,
-        MainWindow_ImportIcon,
+        ICON_FILES.importButton,
         {
         name: 'importButton',
         style: 'toolbutton',
@@ -448,21 +399,21 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         var duration = data.item(index).duration;
 
         if ((renderedCount === duration + 1) && (incompleteCount === 0)) {
-          return greenIcon;
+          return ICON_FILES.greenIcon;
         }
         if ((renderedCount === duration + 1) && (incompleteCount > 0)) {
-          return orangeIcon;
+          return ICON_FILES.orangeIcon;
         }
         if ((renderedCount < duration + 1) && (renderedCount > 0)) {
-          return orangeIcon;
+          return ICON_FILES.orangeIcon;
         }
         if (incompleteCount > 0) {
-          return orangeIcon;
+          return ICON_FILES.orangeIcon;
         }
         if (missingCount === duration + 1) {
-          return redIcon;
+          return ICON_FILES.redIcon;
         }
-        return grayIcon;
+        return ICON_FILES.grayIcon;
       }
 
       if (
@@ -832,11 +783,14 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       data.item(listItem.selection.index).omIndex
     );
 
+    var pathcontrol = new Pathcontrol();
+    pathcontrol.initFromOutputModule(omItem);
+
     try {
       if (listItem.selection) {
         var index = listItem.selection.index;
 
-        var frameWindow = new FrameWindow;
+        var frameWindow = new FrameWindow();
         frameWindow.setIndex(index);
 
         var a = data.item(index).compname;
@@ -852,6 +806,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
             return pathcontrol.getVersionString();
           }
         }());
+
         var e = String(omItem.file.fsName);
         var f = data.item(index).exists.names;
         var g = data.item(index).exists.dates;
@@ -862,7 +817,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         );
       }
     } catch (e) {
-      alert(e);
+      catchError(e);
     }
   }
 

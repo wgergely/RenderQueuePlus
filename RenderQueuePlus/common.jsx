@@ -105,7 +105,16 @@ function formatBytes(a, b) {
 
 
 /**
- * Array.indexOf Polyfill
+ * String.trim() Polyfill
+ * @param  {string} String [description]
+ * @return {string}        [description]
+ */
+Array.prototype.trim || (String.prototype.trim = function() {
+  return this.replace(/^[\s\uFEFF\xA0]+|[\s\uFEFF\xA0]+$/g, '');
+});
+
+/**
+ * Array.indexOf() Polyfill
  *  https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Array/indexOf
  * @param  {[type]} a [description]
  * @param  {[type]} b [description]
@@ -230,7 +239,7 @@ function importFootage(inPath, sequence, compName, version) {
  * @param  {string} title Title of the dialog
  * @param  {string} input Dialog contents
  */
-function alert_scroll(title, input) {
+function alertScroll(title, input) {
   var w = new Window('dialog', title);
   var list = w.add('edittext', undefined, input, {
     multiline: true,
@@ -244,3 +253,61 @@ function alert_scroll(title, input) {
   list.size = [850, 500];
   w.show();
 }
+
+/**
+ * Custom error catcher.
+ * @param  {[type]} e [description]
+ */
+function catchError(e) {
+  var vDebug;
+  var prop;
+
+  var number;
+  var filename;
+  var line;
+  var source;
+  var start;
+  var end;
+  var message;
+  var name;
+  var description;
+
+  var MESSAGE = '';
+
+  for (prop in e) {
+    if (prop == 'number') {
+      number = parseInt(e[prop]);
+    } else if (prop == 'fileName') {
+      filename = new File(e[prop]).fsName;
+    } else if (prop == 'line') {
+      line = parseInt(e[prop]);
+    } else if (prop == 'source') {
+      source = e[prop];
+      source = source.trim();
+      source = source.split('\n');
+      var ln = '';
+      for (var i = 0; i < source.length; i++) {
+        ln += String(pad(i+1, 4)) + '  '+ String(source[i]);
+      }
+      source = ln;
+    } else if (prop == 'start') {
+      start = e[prop];
+    } else if (prop == 'end') {
+      end = e[prop];
+    } else if (prop == 'message') {
+      message = e[prop];
+    } else if (prop == 'name') {
+      name = e[prop];
+    } else if (prop == 'description') {
+      description = e[prop];
+    }
+  };
+  MESSAGE = String(
+    message + '\n\n' +
+    'Line number: ' + line + '\n' +
+    'File: ' + filename + '\n\n' +
+    'Source:\n\n' + source
+  );
+  alertScroll(SCRIPT_NAME, MESSAGE);
+  // vDebug += "toString(): " + " value: [" + err.toString() + "]";
+};

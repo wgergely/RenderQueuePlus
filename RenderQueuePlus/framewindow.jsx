@@ -203,6 +203,14 @@ var FrameWindow = function() {
      * Imports the selected frame
      */
     function importButton_onClick() {
+      var omItem = data.getOutputModule(
+        data.item(listItem.selection.index).rqIndex,
+        data.item(listItem.selection.index).omIndex
+      );
+
+      var pathcontrol = new Pathcontrol();
+      pathcontrol.initFromOutputModule(omItem);
+
       var listItem = w.findElement('listItem');
 
       var selected = listItem.selection;
@@ -224,7 +232,7 @@ var FrameWindow = function() {
               pathcontrol.getVersionString()
             );
           } catch (e) {
-            Window.alert(e, SCRIPT_NAME);
+            catchError(e);
           }
         }
       }
@@ -274,7 +282,7 @@ var FrameWindow = function() {
     var deleteButton = controlsGroup.add(
       'iconbutton',
       undefined,
-      redbinPNG,
+      ICON_FILES.redbin,
       {
         name: 'deleteButton',
       }
@@ -285,7 +293,7 @@ var FrameWindow = function() {
     var sep = controlsGroup.add(
       'iconbutton',
       undefined,
-      MainWindow_Sep,
+      ICON_FILES.separator,
       {
         style: 'toolbutton',
       }
@@ -296,7 +304,7 @@ var FrameWindow = function() {
     var browseButton = controlsGroup.add(
       'iconbutton',
       undefined,
-      MainWindow_RevealIcon,
+      ICON_FILES.revealButton,
       {
         name: 'browseButton',
         style: 'toolbutton',
@@ -308,7 +316,7 @@ var FrameWindow = function() {
     var importButton = controlsGroup.add(
       'iconbutton',
       undefined,
-      MainWindow_ImportIcon,
+      ICON_FILES.importButton,
       {
         name: 'importButton',
         style: 'toolbutton',
@@ -332,7 +340,7 @@ var FrameWindow = function() {
     var refreshButton = controlsGroup.add(
       'iconbutton',
       undefined,
-      MainWindow_RefreshIcon,
+      ICON_FILES.refreshButton,
       {
         name: 'refreshButton',
         style: 'toolbutton',

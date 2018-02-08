@@ -6,9 +6,11 @@ var Data = function() {
   var DATA;
 
   /**
-   * [setData description]
-   * @param {[type]} dataObj [description]
-   * @return {object}
+   * Private convenience function that populates the dataObj.
+   * @param {object} dataObj The dataObject to populate.
+   * @param {outputModule} rqItem  outputModule.
+   * @param {renderQueueItem} omItem  renderQueueItem.
+   * @return {object} dataObj  populated dataObject.
    */
   function setData(dataObj, rqItem, omItem) {
      var omFile = omItem.file;
@@ -333,8 +335,6 @@ var Data = function() {
   }
 
   var cls = function() {
-    var cls = this;
-
     this.getOutputModule = function(rqIndex, omIndex) {
       var rqItem;
       var omItem;

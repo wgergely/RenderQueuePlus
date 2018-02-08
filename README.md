@@ -1,2 +1,3 @@
-# RenderQueuePlus
-Render Queue Extensions for After Effects
+# RenderQueue+
+
+A collection of render utilites.

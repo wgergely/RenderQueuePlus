@@ -217,14 +217,14 @@ var Settings = function(thisObj) {
    * Show rv help
    */
   function rvHelpButton_onClick() {
-    alert_scroll('Help: RV Command Line Switches', settings.rv.rv_help);
+    alertScroll('Help: RV Command Line Switches', settings.rv.rv_help);
   }
 
   /**
    * Show djv help
    */
   function djvHelpButton_onClick() {
-    alert_scroll(
+    alertScroll(
       'Help: DJV View Command Line Switches',
       settings.djv.djv_help
     );
