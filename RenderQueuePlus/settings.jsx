@@ -59,6 +59,7 @@ var Settings = function(thisObj) {
     };
 
     var settings = {};
+    var settingsPalette;
 
     settings.lastmodified = LAST_MODIFIED;
     settings.version = VERSION;
@@ -477,8 +478,6 @@ var Settings = function(thisObj) {
   var cls = function() {
     var cls = this;
 
-    this.settingsPalette = null;
-
     this.createUI = function(cls) {
       settingsPalette = thisObj instanceof Panel ? thisObj : new Window(
         'palette',
@@ -508,7 +507,7 @@ var Settings = function(thisObj) {
       var pathcontrolPanel = binGroup.add(
         'panel',
         undefined,
-        'Set Default Render Location',
+        'Default Render Location',
         {
           borderstyle: 'gray',
           name: 'pathcontrolPanel',
@@ -527,7 +526,7 @@ var Settings = function(thisObj) {
       var pathcontrol_basepatternHeader = pathcontrol_basepatternGroup.add(
         'statictext',
         undefined,
-        'Type/pick folder path:',
+        'Path to the renders folder:',
         {
           name: 'pathcontrol_basepatternHeader',
         }
@@ -579,7 +578,7 @@ var Settings = function(thisObj) {
       var pathcontrol_fsNameLabel = pathcontrolResultGroup.add(
         'statictext',
         undefined,
-        'Use ./ or ../ to set a path relative to the active project.',
+        'To set a path relative to the active project use\n./  or  ../',
         {
           name: 'pathcontrol_fsNameLabel',
           multiline: true,

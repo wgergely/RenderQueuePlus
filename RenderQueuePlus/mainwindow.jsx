@@ -195,7 +195,11 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       versionsDropdown.size = [60, elemSize];
       versionsDropdown.enabled = false;
       versionsDropdown.onChange = function() {
-        versionsDropdown_onChange(versionsDropdown);
+        try {
+          versionsDropdown_onChange(versionsDropdown);
+        } catch (e) {
+          catchError(e);
+        }
       };
 
 
@@ -260,6 +264,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         columnTitles: columnTitles,
         columnWidths: columnWidths,
       });
+      cls.prototype.listItem = listItem;
       listItem.size = [0, 0];
       listItem.onChange = listItem.onChanging = listItem_onChange;
       listItem.onDoubleClick = listItem_onDoubleClick;
@@ -311,6 +316,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
   };
 
   cls.prototype = {
+    listItem: null,
     show: function() {
       listItem.size.width = (function() {
         var width = 0;
@@ -487,6 +493,9 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         data.item(listItem.selection.index).rqIndex,
         data.item(listItem.selection.index).omIndex
       );
+
+      var pathcontrol = new Pathcontrol();
+      pathcontrol.initFromOutputModule(omItem);
 
       var saved;
       var bat;
@@ -771,7 +780,11 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
    * Refresh data
    */
   function refreshButton_onClick() {
-    cls.prototype.refresh();
+    try {
+      cls.prototype.refresh();
+    } catch (e) {
+      catchError(e);
+    }
   };
 
   /**
@@ -825,7 +838,11 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
    * Starts the background render
    */
   function aerenderButton_onClick() {
-    cls.prototype.aerender(false);
+    try {
+      cls.prototype.aerender(false);
+    } catch (e) {
+      catchError(e);
+    }
   }
 
   /**
@@ -930,8 +947,34 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
   }
 
   /**
+   * Sets the default renderQueue item properties.
+   * As of CC 2018 the output module properties are
+   * still read-only. Come on Adobe...
+   * @param {integer} rqIndex Render Queue item index (1-based).
+   * @param {integer} omIndex Render Queue OutputModule index (1-based).
+   */
+  function setRenderQueueItemDefaults(rqIndex, omIndex) {
+    var rqItem = app.project.renderQueue.item(rqIndex);
+    var omItem = data.getOutputModule(rqIndex, omIndex);
+
+    rqItem.setSetting('Time Span', 0); // 'Length of the comp'
+    rqItem.setSetting('Skip Existing Files', true);
+    rqItem.setSetting('Quality', 2); // 'best'
+    rqItem.setSetting('Resolution', '1,1'); // 'full' {'x': 1, 'y': 1}
+
+    omItem.setSetting('Video Output', true);
+    omItem.setSetting('Use Comp Frame Number', false);
+    omItem.setSetting('Starting #', 1);
+    omItem.setSetting('Resize', false);
+    // omItem.setSetting('Format', 7); // 'PNG' - READ ONLY PROPERTY
+    // omItem.setSetting('Channels', 1); // 'RGBA' - READ ONLY PROPERTY
+    // omItem.setSetting('Depth', 32); // 'Millions+' - READ ONLY PROPERTY
+    // omItem.setSetting('Color', 0); // 'Straight' - READ ONLY PROPERTY
+  };
+
+  /**
    * Event triggered when the dropdown menu selection changes
-   * @param  {[type]} versionsDropdown [description]
+   * @param  {[type]} versionsDropdown the menu (self)
    */
   function versionsDropdown_onChange(versionsDropdown) {
     if (versionsDropdown.selection === null) {
@@ -941,6 +984,11 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     var fsName = getSetting('pathcontrol_fsName');
 
     if (versionsDropdown.selection.text === 'Set Version Control') {
+      setRenderQueueItemDefaults(
+        data.item(listItem.selection.index).rqIndex,
+        data.item(listItem.selection.index).omIndex
+      );
+
       var omItem = data.getOutputModule(
         data.item(listItem.selection.index).rqIndex,
         data.item(listItem.selection.index).omIndex

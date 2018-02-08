@@ -1,4 +1,4 @@
-(function(thisObj) {
+renderQueuePlus = function(thisObj) {
   var LAST_MODIFIED = '08/02/2018';
   var VERSION = '0.2.0';
   var SCRIPT_NAME = 'Render Queue+';
@@ -50,4 +50,4 @@
 
   this.window = mainWindow;
   return this;
-})(this);
+}(this);

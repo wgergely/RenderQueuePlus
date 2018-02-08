@@ -35,9 +35,12 @@ var FrameWindow = function() {
     var listItem = window.findElement('listItem');
     var searchGroup = window.findElement('searchGroup');
 
+    var filterText = cls.prototype.searchField.text;
+    alert(filterText);
+
     if (inColumn1.length > 0) {
       for (var i = 0; i < inColumn1.length; i++) {
-        if (!(inColumn1[i] == ('Invalid path.' || 'Error.'))) {
+        if (!((inColumn1[i] == 'Error.') || (inColumn1[i] == 'Invalid path.'))) {
           searchGroup.enabled = true;
           listGroup.enabled = true;
 
@@ -54,7 +57,7 @@ var FrameWindow = function() {
             break;
           }
         } else {
-          item = listItem.add('item', inColumn1[i]);
+          item = listItem.add('item', 'No items found.');
           searchGroup.enabled = false;
           listGroup.enabled = false;
           break;
@@ -97,9 +100,9 @@ var FrameWindow = function() {
      * Called when the window is closed
      */
     function button_cancel_onClick() {
-      refreshButton_onClick();
       w.close();
       w = undefined;
+      mainWindow.refresh();
     }
 
     /**
@@ -203,37 +206,31 @@ var FrameWindow = function() {
      * Imports the selected frame
      */
     function importButton_onClick() {
+      var index = mainWindow.getSelection();
+      var listItem = w.findElement('listItem');
       var omItem = data.getOutputModule(
-        data.item(listItem.selection.index).rqIndex,
-        data.item(listItem.selection.index).omIndex
+        data.item(index).rqIndex,
+        data.item(index).omIndex
       );
 
       var pathcontrol = new Pathcontrol();
       pathcontrol.initFromOutputModule(omItem);
 
-      var listItem = w.findElement('listItem');
-
-      var selected = listItem.selection;
-
       if (listItem.selection) {
-        for (var i = 0; i < selected.length; i++) {
-          idx = selected[i].index;
+        for (var i = 0; i < listItem.selection.length; i++) {
+          idx = listItem.selection[i].index;
           if (data.item(index).exists.fsNames.length < 1) {
             Window.alert(
               'No files have been rendered yet.',
               SCRIPT_NAME + ': Unable to import footage'
             );
           };
-          try {
-            importFootage(
-              data.item(index).exists.fsNames[idx],
-              false,
-              data.item(index).compname,
-              pathcontrol.getVersionString()
-            );
-          } catch (e) {
-            catchError(e);
-          }
+          importFootage(
+            data.item(index).exists.fsNames[idx],
+            false,
+            data.item(index).compname,
+            pathcontrol.getVersionString()
+          );
         }
       }
     };
@@ -288,7 +285,13 @@ var FrameWindow = function() {
       }
     );
     deleteButton.size = [elemSize, elemSize];
-    deleteButton.onClick = deleteButton_onClick;
+    deleteButton.onClick = function() {
+      try {
+        deleteButton_onClick();
+      } catch (e) {
+        catchError(e);
+      }
+    };
 
     var sep = controlsGroup.add(
       'iconbutton',
@@ -310,7 +313,13 @@ var FrameWindow = function() {
         style: 'toolbutton',
       }
     );
-    browseButton.onClick = browseButton_onClick;
+    browseButton.onClick = function() {
+      try {
+        browseButton_onClick();
+      } catch (e) {
+        catchError(e);
+      }
+    };
     browseButton.size = [elemSize, elemSize];
 
     var importButton = controlsGroup.add(
@@ -322,7 +331,13 @@ var FrameWindow = function() {
         style: 'toolbutton',
       }
     );
-    importButton.onClick = importButton_onClick;
+    importButton.onClick = function() {
+      try {
+        importButton_onClick();
+      } catch (e) {
+        catchError(e);
+      }
+    };
     importButton.size = [elemSize, elemSize];
 
     var incompleteButton = controlsGroup.add(
@@ -334,7 +349,13 @@ var FrameWindow = function() {
         style: 'toolbutton',
       }
     );
-    incompleteButton.onClick = incompleteButton_onClick;
+    incompleteButton.onClick = function() {
+      try {
+        incompleteButton_onClick();
+      } catch (e) {
+        catchError(e);
+      }
+    };
     incompleteButton.size = [115, elemSize];
 
     var refreshButton = controlsGroup.add(
@@ -346,7 +367,13 @@ var FrameWindow = function() {
         style: 'toolbutton',
       }
     );
-    refreshButton.onClick = refreshButton_onClick;
+    refreshButton.onClick = function() {
+      try {
+        refreshButton_onClick();
+      } catch (e) {
+        catchError(e);
+      }
+    };
     refreshButton.size = [elemSize, elemSize];
 
     var sep1 = w.add(
@@ -359,91 +386,6 @@ var FrameWindow = function() {
     );
     sep1.size = [20, 20];
 
-    var infoGroup4 = w.add(
-      'group',
-      undefined, {
-        name: 'infoGroup4',
-        orientation: 'row',
-      }
-    );
-
-    var infoField4 = infoGroup4.add(
-      'edittext',
-      undefined,
-      '-',
-      {
-        name: 'infoField4',
-      }
-    );
-
-    var infoGroup1 = w.add(
-      'group',
-      undefined,
-      {
-        name: 'infoGroup1',
-        orientation: 'row',
-      }
-    );
-
-    var infoField1 = infoGroup1.add(
-      'statictext',
-      undefined,
-      '-',
-      {
-        name: 'infoField1',
-      }
-    );
-
-    var infoGroup2 = w.add(
-      'group',
-      undefined,
-      {
-        name: 'infoGroup2',
-        orientation: 'row',
-      }
-    );
-
-    var infoField2 = infoGroup2.add(
-      'statictext',
-      undefined,
-      '-',
-      {
-        name: 'infoField2',
-      }
-    );
-
-    var infoGroup3 = w.add(
-      'group',
-      undefined, {
-        name: 'infoGroup3',
-        orientation: 'row',
-      }
-    );
-
-    var infoField3 = infoGroup3.add(
-      'statictext',
-      undefined,
-      '-',
-      {
-        name: 'infoField3',
-      }
-    );
-
-    infoGroup1.margins = 0;
-    infoGroup2.margins = 0;
-    infoGroup3.margins = 0;
-    infoGroup4.margins = 0;
-
-    infoGroup1.spacing = 0;
-    infoGroup2.spacing = 0;
-    infoGroup3.spacing = 0;
-    infoGroup4.spacing = 0;
-
-    infoGroup1.alignChildren = 'left';
-    infoGroup2.alignChildren = 'left';
-    infoGroup3.alignChildren = 'left';
-    infoGroup4.alignChildren = 'left';
-
     var searchGroup = w.add('group', undefined, {
       name: 'searchGroup',
       orientation: 'row',
@@ -452,12 +394,26 @@ var FrameWindow = function() {
     searchGroup.margins = [0, 0, 0, 0];
     searchGroup.spacing = 0;
 
-    var searchField = searchGroup.add('edittext', undefined, '-', {
+    var searchField = searchGroup.add('edittext', undefined, '', {
       multiline: false,
       name: 'searchField',
     });
+    cls.prototype.searchField = searchField;
 
-    // List
+    searchField.onChanging = function() {
+      searchfield_onChanged(searchField.text);
+    };
+    searchField.onChanged = function() {
+      searchfield_onChanged(searchField.text);
+    };
+
+    /**
+     * [searchfield description]
+     * @param  {[type]} text [description]
+     */
+    function searchfield_onChanged(text) {
+      $.writeln(getRanges(text));
+    };
 
     var listGroup = w.add('group', undefined, {
       name: 'listGroup',
@@ -478,8 +434,97 @@ var FrameWindow = function() {
     listItem.margins = 0;
     listItem.spacing = 0;
     listItem.onDoubleClick = function() {
-      app.project.renderQueue.showWindow(true);
+      try {
+        app.project.renderQueue.showWindow(true);
+      } catch (e) {
+        catchError(e);
+      }
     };
+
+        var infoGroup4 = w.add(
+          'group',
+          undefined, {
+            name: 'infoGroup4',
+            orientation: 'row',
+          }
+        );
+
+        var infoField4 = infoGroup4.add(
+          'edittext',
+          undefined,
+          '-',
+          {
+            name: 'infoField4',
+          }
+        );
+
+        var infoGroup1 = w.add(
+          'group',
+          undefined,
+          {
+            name: 'infoGroup1',
+            orientation: 'row',
+          }
+        );
+
+        var infoField1 = infoGroup1.add(
+          'statictext',
+          undefined,
+          '-',
+          {
+            name: 'infoField1',
+          }
+        );
+
+        var infoGroup2 = w.add(
+          'group',
+          undefined,
+          {
+            name: 'infoGroup2',
+            orientation: 'row',
+          }
+        );
+
+        var infoField2 = infoGroup2.add(
+          'statictext',
+          undefined,
+          '-',
+          {
+            name: 'infoField2',
+          }
+        );
+
+        var infoGroup3 = w.add(
+          'group',
+          undefined, {
+            name: 'infoGroup3',
+            orientation: 'row',
+          }
+        );
+
+        var infoField3 = infoGroup3.add(
+          'statictext',
+          undefined,
+          '-',
+          {
+            name: 'infoField3',
+          }
+        );
+
+        infoGroup1.margins = 0;
+        infoGroup2.margins = 0;
+        infoGroup3.margins = 0;
+        infoGroup4.margins = 0;
+
+        infoGroup1.spacing = 0;
+        infoGroup2.spacing = 0;
+        infoGroup3.spacing = 0;
+        infoGroup4.spacing = 0;
+
+        infoGroup1.alignChildren = 'left';
+        infoGroup2.alignChildren = 'left';
+        infoGroup3.alignChildren = 'left';
+        infoGroup4.alignChildren = 'left';
 
     // Footer
 
@@ -494,7 +539,13 @@ var FrameWindow = function() {
       name: 'button_cancel',
     });
     button_cancel.size = [100, 20];
-    button_cancel.onClick = button_cancel_onClick;
+    button_cancel.onClick = function() {
+      try {
+        button_cancel_onClick();
+      } catch (e) {
+        catchError(e);
+      };
+    };
     button_cancel.margins = 0;
     button_cancel.spacing = 0;
 
@@ -561,6 +612,8 @@ var FrameWindow = function() {
       window.show();
     };
   };
-
+  cls.prototype = {
+    searchField: null,
+  };
   return cls;
 }();

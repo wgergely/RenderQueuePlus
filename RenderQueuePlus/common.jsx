@@ -45,9 +45,38 @@ function pad(a, b) {
   return c;
 }
 
+
 /**
- * Returns an array from a given range string
- * eg. '1-250' results in [1,2,3,..,250]
+ * Converts a range to an array of numbers
+ * eg. '1-250' results in [1,2,3,..,250].
+ * http://stackoverflow.com/questions/2270910/how-to-convert-sequence-of-numbers-in-an-array-to-range-of-numbers
+ * @param  {string} string [description]
+ * @return {array}       [description]
+ */
+function getArrayFromRange(string, limit) {
+   var match = string.match(/(\d*)(-+)(\d*)/);
+   if (!(match)) {
+     return [];
+   }
+   var start = parseInt(match[1]);
+   var end = parseInt(match[3]);
+   if (start > end) {
+     start = parseInt(match[3]);
+     end = parseInt(match[1]);
+   };
+   var duration = end - start;
+   if (duration > limit) {
+     return [];
+   }
+   var arr = [];
+   for (start; start <= end; start++) {
+     arr.push(start);
+   }
+   return arr;
+ }
+/**
+ * Returns a string representation of an array.
+ * eg. [1,2,3,..,250] results in '1-250'.
  * http://stackoverflow.com/questions/2270910/how-to-convert-sequence-of-numbers-in-an-array-to-range-of-numbers
  * @param  {[type]} array [description]
  * @return {[type]}       [description]
@@ -63,7 +92,7 @@ function getRanges(array) {
       rend = array[i + 1]; // increment the index if the numbers sequential
       i++;
     }
-    ranges.push(rstart == rend ? rstart+'' : rstart + '-' + rend);
+    ranges.push(rstart == rend ? rstart + '' : rstart + '-' + rend);
   }
   return ranges;
 };
@@ -259,7 +288,6 @@ function alertScroll(title, input) {
  * @param  {[type]} e [description]
  */
 function catchError(e) {
-  var vDebug;
   var prop;
 
   var number;
@@ -303,11 +331,13 @@ function catchError(e) {
     }
   };
   MESSAGE = String(
-    message + '\n\n' +
+    'Error:\n\n' +
+    '---------------------------------\n\n' +
+    '"' + message + '"\n\n' +
+    '---------------------------------\n\n' +
     'Line number: ' + line + '\n' +
     'File: ' + filename + '\n\n' +
     'Source:\n\n' + source
   );
   alertScroll(SCRIPT_NAME, MESSAGE);
-  // vDebug += "toString(): " + " value: [" + err.toString() + "]";
 };

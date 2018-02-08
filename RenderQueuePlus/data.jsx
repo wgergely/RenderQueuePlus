@@ -375,6 +375,11 @@ var Data = function() {
           omItem = rqItem.outputModule(j);
           dataObj = {};
 
+          if (!(omItem.file)) {
+            var fsName = getSetting('pathcontrol_fsName');
+            omItem.file = new File(fsName + '/tempOutput');
+          }
+
           dataObj.ready = function() {
             if (rqItem.status == RQItemStatus.QUEUED) {
               return true;
@@ -452,6 +457,8 @@ var Data = function() {
             dates: null,
             count: null,
           };
+
+
 
           dataObj = setData(dataObj, rqItem, omItem);
           DATA.push(dataObj);
