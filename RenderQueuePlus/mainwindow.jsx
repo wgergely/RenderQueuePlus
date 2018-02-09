@@ -91,7 +91,13 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           style: 'toolbutton',
         }
       );
-      playButton.onClick = playButton_onClick;
+      playButton.onClick = function() {
+        try {
+          playButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
       playButton.size = [elemSize, elemSize];
       playButton.alignment = 'left';
       playButton.enabled = false;
@@ -625,6 +631,14 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
    * @return {[type]} [description]
    */
   function playButton_onClick() {
+    var omItem = data.getOutputModule(
+      data.item(listItem.selection.index).rqIndex,
+      data.item(listItem.selection.index).omIndex
+    );
+
+    var pathcontrol = new Pathcontrol();
+    pathcontrol.initFromOutputModule(omItem);
+
     if (listItem.selection) {
       var player = getSetting('player');
       var index = listItem.selection.index;
@@ -856,6 +870,14 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
    * Import render output as footage
    */
   function importButton_onClick() {
+    var omItem = data.getOutputModule(
+      data.item(listItem.selection.index).rqIndex,
+      data.item(listItem.selection.index).omIndex
+    );
+
+    var pathcontrol = new Pathcontrol();
+    pathcontrol.initFromOutputModule(omItem);
+
     if (listItem.selection) {
       var index = listItem.selection.index;
       if (data.item(index).exists.fsNames.length < 1) {
@@ -873,7 +895,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           pathcontrol.getVersionString()
         );
       } catch (e) {
-        Window.alert(e, SCRIPT_NAME);
+        catchError(e);
       }
     }
   }
