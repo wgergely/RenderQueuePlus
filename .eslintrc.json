@@ -1,0 +1,18 @@
+{
+  "extends": "google",
+  "parserOptions": {
+    "ecmaVersion": 5,
+    "sourceType": "script",
+    "ecmaFeatures": {
+      "jsx": false
+    }
+  },
+  "rules": {
+    "linebreak-style": "off",
+    "camelcase": "off",
+    "no-var": "off",
+    "no-unused-vars": "warn",
+    "max-len": "warn",
+    "no-extend-native": "warn"
+  }
+}

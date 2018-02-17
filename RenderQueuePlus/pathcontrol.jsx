@@ -119,7 +119,15 @@ var Pathcontrol = function() {
       return versionFolders;
     };
 
-    this.apply = function(omItem) {
+    this.apply = function(item) {
+      var omItem = data.getOutputModule(
+        data.item(listItem.selection.index).rqIndex,
+        data.item(listItem.selection.index).omIndex
+      );
+      var rqItem = app.project.renderQueue.item(
+        data.item(listItem.selection.index).rqIndex
+      );
+
       var foldersOK = false;
 
       if (getSetting('pathcontrol_fsName')) {
@@ -146,14 +154,14 @@ var Pathcontrol = function() {
       if (foldersOK) {
         if (props.padding > 0) {
           props.template = (
-            props.versionString() + '/' + '[compName]' + '_' +
+            props.versionString() + '/' + fileNameSafeString(rqItem.comp.name) + '_' +
             props.versionString() + '_' +
             props.paddingString() + '.[fileExtension]'
           );
         }
         if (props.padding == 0) {
           props.template = (
-            props.versionString() + '/' + '[compName]' + '_' +
+            props.versionString() + '/' + fileNameSafeString(rqItem.comp.name) + '_' +
             props.versionString() + '.[fileExtension]'
           );
         }

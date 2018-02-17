@@ -51,7 +51,13 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           style: 'toolbutton',
         }
       );
-      aerenderButton.onClick = aerenderButton_onClick;
+      aerenderButton.onClick = function() {
+        try {
+          aerenderButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
       aerenderButton.size = [(elemSize * 1.5), elemSize];
       aerenderButton.alignment = 'left';
       aerenderButton.enabled = false;
@@ -202,7 +208,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       versionsDropdown.enabled = false;
       versionsDropdown.onChange = function() {
         try {
-          versionsDropdown_onChange(versionsDropdown);
+          versionsDropdown_onChange(this);
         } catch (e) {
           catchError(e);
         }
@@ -218,7 +224,13 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           style: 'toolbutton',
         }
       );
-      versionsIncrement.onClick = versionsIncrement_onClick;
+      versionsIncrement.onClick = function() {
+        try {
+          versionsIncrement_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
       versionsIncrement.size = [elemSize, elemSize];
       versionsIncrement.alignment = 'left';
       versionsIncrement.enabled = false;
@@ -272,8 +284,11 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       });
       cls.prototype.listItem = listItem;
       listItem.size = [0, 0];
-      listItem.onChange = listItem.onChanging = listItem_onChange;
+      listItem.onChange = listItem_onChange;
       listItem.onDoubleClick = listItem_onDoubleClick;
+      listItem.onActivate = function() {
+        // cls.prototype.refresh();
+      };
     }();
 
     this.setSelection = function(index) {
@@ -322,7 +337,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
   };
 
   cls.prototype = {
-    listItem: null,
+    listItem: listItem,
     show: function() {
       listItem.size.width = (function() {
         var width = 0;
@@ -904,37 +919,35 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
    * Increments version by one
    */
   function versionsIncrement_onClick() {
-    try {
-      var cs = cls.prototype.getSelection();
+    var cs = cls.prototype.getSelection();
 
-      var omItem = data.getOutputModule(
-        data.item(listItem.selection.index).rqIndex,
-        data.item(listItem.selection.index).omIndex
-      );
+    var omItem = data.getOutputModule(
+      data.item(listItem.selection.index).rqIndex,
+      data.item(listItem.selection.index).omIndex
+    );
 
-      var pathcontrol = new Pathcontrol();
-      pathcontrol.initFromOutputModule(omItem);
+    var pathcontrol = new Pathcontrol();
+    pathcontrol.initFromOutputModule(omItem);
 
-      pathcontrol.setVersion(pathcontrol.getVersion() + 1);
-      pathcontrol.apply(omItem);
+    pathcontrol.setVersion(pathcontrol.getVersion() + 1);
+    pathcontrol.apply(
+      data.item(listItem.selection.index)
+    );
 
-      data.setData();
+    data.setData();
 
-      cls.prototype.clear();
-      cls.prototype.setlist(
-        data.compnames(),
-        data.filenames(),
-        data.rendered().frames,
-        data.missing().frames,
-        data.incomplete().frames,
-        data.rendered().sizes
-      );
+    cls.prototype.clear();
+    cls.prototype.setlist(
+      data.compnames(),
+      data.filenames(),
+      data.rendered().frames,
+      data.missing().frames,
+      data.incomplete().frames,
+      data.rendered().sizes
+    );
 
-      settings.setbasepath();
-      cls.prototype.setSelection(cs);
-    } catch (e) {
-      alert(e);
-    }
+    settings.setbasepath();
+    cls.prototype.setSelection(cs);
   }
   /**
    * Resets the version to 1
@@ -949,7 +962,9 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     var pathcontrol = new Pathcontrol();
     pathcontrol.initFromOutputModule(omItem);
     pathcontrol.setVersion(1);
-    pathcontrol.apply(omItem);
+    pathcontrol.apply(
+      data.item(listItem.selection.index)
+    );
 
     data.setData();
 
@@ -999,49 +1014,48 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
    * @param  {[type]} versionsDropdown the menu (self)
    */
   function versionsDropdown_onChange(versionsDropdown) {
-    if (versionsDropdown.selection === null) {
+    var sel = versionsDropdown.selection;
+
+    if (sel === null) {
       return;
     }
 
     var fsName = getSetting('pathcontrol_fsName');
 
-    if (versionsDropdown.selection.text === 'Set Version Control') {
+    var omItem = data.getOutputModule(
+      data.item(listItem.selection.index).rqIndex,
+      data.item(listItem.selection.index).omIndex
+    );
+
+    var pathcontrol = new Pathcontrol();
+    pathcontrol.initFromOutputModule(omItem);
+
+    if (sel.text === 'Set Version Control') {
       setRenderQueueItemDefaults(
         data.item(listItem.selection.index).rqIndex,
         data.item(listItem.selection.index).omIndex
       );
 
-      var omItem = data.getOutputModule(
-        data.item(listItem.selection.index).rqIndex,
-        data.item(listItem.selection.index).omIndex
-      );
+      pathcontrol.setVersion(1);
 
-      var pathcontrol = new Pathcontrol();
-      pathcontrol.initFromOutputModule(omItem);
-
-      if (!pathcontrol.getVersion()) {
-        pathcontrol.setVersion(1);
-        cls.prototype.cleardropdown();
-
-        if (
-          fsName[fsName.length - 1] == '/' ||
-          fsName[fsName.length - 1] == '\\'
-        ) {
-          pathcontrol.setBasepath(
-            fsName + data.item(listItem.selection.index).compname
-          );
-        } else {
-          pathcontrol.setBasepath(
-            fsName + sep + data.item(listItem.selection.index).compname
-          );
-        }
-
-        cls.prototype.setdropdown(pathcontrol.getVersions());
-        pathcontrol.apply(omItem);
+      if (
+        fsName[fsName.length - 1] == '/' ||
+        fsName[fsName.length - 1] == '\\'
+      ) {
+        pathcontrol.setBasepath(
+          fsName + data.item(listItem.selection.index).compname
+        );
+      } else {
+        pathcontrol.setBasepath(
+          fsName + sep + data.item(listItem.selection.index).compname
+        );
       }
+      pathcontrol.apply(
+        data.item(listItem.selection.index)
+      );
     } else {
       pathcontrol.setVersion(
-        getVersionNumberFromString(versionsDropdown.selection.text)
+        getVersionNumberFromString(sel.text)
       );
 
       if (
@@ -1056,25 +1070,28 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           fsName + sep + data.item(listItem.selection.index).compname
         );
       }
-      pathcontrol.apply(omItem);
+      pathcontrol.apply(
+        data.item(listItem.selection.index)
+      );
+
+      data.setData();
+      var cs = cls.prototype.getSelection();
+
+      cls.prototype.clear();
+      cls.prototype.setlist(
+        data.compnames(),
+        data.filenames(),
+        data.rendered().frames,
+        data.missing().frames,
+        data.incomplete().frames,
+        data.rendered().sizes
+      );
+
+      settings.setbasepath();
+
+      // cls.prototype.show();
+      cls.prototype.setSelection(cs);
     }
-
-    data.setData();
-
-    var s = mainWindow.getSelection();
-    mainWindow.clear();
-
-    mainWindow.setlist(
-      data.compnames(),
-      data.filenames(),
-      data.rendered().frames,
-      data.missing().frames,
-      data.incomplete().frames,
-      data.rendered().sizes
-    );
-
-    settings.setbasepath();
-    mainWindow.setSelection(s);
   }
 
   /**
@@ -1099,11 +1116,9 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       var pathcontrol = new Pathcontrol();
       pathcontrol.initFromOutputModule(omItem);
 
-      cls.prototype.cleardropdown();
 
       if (pathcontrol.getVersion()) {
         var fsName = getSetting('pathcontrol_fsName');
-
         if (
           fsName[fsName.length - 1] == '/' ||
           fsName[fsName.length - 1] == '\\'
@@ -1116,14 +1131,18 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
             fsName + sep + data.item(listItem.selection.index).compname
           );
         }
+
         if (pathcontrol.getVersions().length > 0) {
+          cls.prototype.cleardropdown();
           cls.prototype.setdropdown(pathcontrol.getVersions());
         } else {
           var noVersions = new Folder('No rendered versions found');
+          cls.prototype.cleardropdown();
           cls.prototype.setdropdown([noVersions]);
         }
       } else {
         var setVersionControl = new Folder('Set Version Control');
+        cls.prototype.cleardropdown();
         cls.prototype.setdropdown([setVersionControl]);
         pathcontrol.setBasepath(null);
         versionsIncrement.enabled = false;

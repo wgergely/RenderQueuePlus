@@ -1,5 +1,7 @@
 var FrameWindow = function() {
   var initX = 600;
+  var state = false;
+  var index;
 
   /**
    * Sets the information about the current project/status.
@@ -36,12 +38,10 @@ var FrameWindow = function() {
     var searchGroup = window.findElement('searchGroup');
 
     var filterText = cls.prototype.searchField.text;
-    alert(filterText);
 
     if (inColumn1.length > 0) {
       for (var i = 0; i < inColumn1.length; i++) {
         if (!((inColumn1[i] == 'Error.') || (inColumn1[i] == 'Invalid path.'))) {
-          searchGroup.enabled = true;
           listGroup.enabled = true;
 
           item = listItem.add('item', inColumn1[i]);
@@ -58,7 +58,6 @@ var FrameWindow = function() {
           }
         } else {
           item = listItem.add('item', 'No items found.');
-          searchGroup.enabled = false;
           listGroup.enabled = false;
           break;
         }
@@ -66,7 +65,6 @@ var FrameWindow = function() {
     } else {
       item = listItem.add('item', 'No items found.');
       listGroup.enabled = false;
-      searchGroup.enabled = false;
       if (inNumColumns >= 2) {
         item.subItems[0].text = '-';
       };
@@ -92,9 +90,9 @@ var FrameWindow = function() {
     var w = new Window('dialog', inTitle, undefined, {
       resizeable: false,
     });
-    w.alignChildren = 'left';
-    w.margins = 10;
-    w.spacing = 5;
+    w.alignChildren = 'center';
+    w.margins = 18;
+    w.spacing = 6;
 
     /**
      * Called when the window is closed
@@ -124,38 +122,37 @@ var FrameWindow = function() {
           'Confirm Delete'
         );
 
-        if (choice) {
-          for (var i = 0; i < selected.length; i++) {
-            var existingFiles = data.item(index).exists;
-            var idx = existingFiles.names.indexOf(selected[i].text);
+        if (!(choice)) {
+          return;
+        }
 
-            while (!file.changePath(existingFiles.fsNames[idx])) {
-              selected[i].text = 'Updating...';
-            };
+        for (var i = 0; i < selected.length; i++) {
+          var existingFiles = data.item(index).exists;
+          var idx = existingFiles.names.indexOf(selected[i].text);
 
-            if (file.exists) {
-              result = file.remove();
-              if (result) {
-                selected[i].enabled = false;
-                selected[i].text = 'Deleted.';
-              } else {
-                var text = 'Sorry, there was an error deleteing the file.';
-                text += '\nUnkown error.';
-                Window.alert(
-                  text,
-                  SCRIPT_NAME
-                );
-              }
-            } else {
-              var text = 'Sorry, there was an error deleteing the file.';
-              text += '\nFile doesn\'t exist.';
-              Window.alert(
-                text,
-                SCRIPT_NAME
-              );
-            }
+          while (!file.changePath(existingFiles.fsNames[idx])) {
+            selected[i].text = 'Updating...';
+          };
+
+          if (!(file.exists)) {
+            continue;
+          }
+
+          result = file.remove();
+
+          if (result) {
+            selected[i].enabled = false;
+            selected[i].text = 'Deleted.';
+          } else {
+            var text = 'Sorry, there was an error deleteing the file.';
+            text += '\nUnkown error.';
+            Window.alert(
+              text,
+              SCRIPT_NAME
+            );
           }
         }
+        data.setData();
       } else {
         Window.alert(
           'Select an item from the list below before continuing.',
@@ -177,15 +174,7 @@ var FrameWindow = function() {
     function refreshButton_onClick() {
       data.setData();
 
-      var listItem = w.findElement('listItem');
-      listItem.removeAll();
-      setlist(
-        w,
-        3,
-        data.item(index).exists.names,
-        data.item(index).exists.dates,
-        data.item(index).exists.sizes
-      );
+      searchField.onChanging();
 
       var cs = mainWindow.getSelection();
       mainWindow.clear();
@@ -203,7 +192,8 @@ var FrameWindow = function() {
     };
 
     /**
-     * Imports the selected frame
+     * Action called upon clicking the import button.
+     * @return {[type]} the imported footage item
      */
     function importButton_onClick() {
       var index = mainWindow.getSelection();
@@ -216,22 +206,26 @@ var FrameWindow = function() {
       var pathcontrol = new Pathcontrol();
       pathcontrol.initFromOutputModule(omItem);
 
-      if (listItem.selection) {
-        for (var i = 0; i < listItem.selection.length; i++) {
-          idx = listItem.selection[i].index;
-          if (data.item(index).exists.fsNames.length < 1) {
-            Window.alert(
-              'No files have been rendered yet.',
-              SCRIPT_NAME + ': Unable to import footage'
-            );
-          };
-          importFootage(
-            data.item(index).exists.fsNames[idx],
-            false,
-            data.item(index).compname,
-            pathcontrol.getVersionString()
+      if (!(listItem.selection)) {
+        return;
+      }
+
+      for (var i = 0; i < listItem.selection.length; i++) {
+        idx = listItem.selection[i].index;
+        if (data.item(index).exists.fsNames.length < 1) {
+          Window.alert(
+            'No files have been rendered yet.',
+            SCRIPT_NAME + ': Unable to import footage'
           );
-        }
+        };
+        var footage = importFootage(
+          data.item(index).exists.fsNames[idx],
+          false,
+          data.item(index).compname,
+          pathcontrol.getVersionString()
+        );
+        footage.openInViewer();
+        return footage;
       }
     };
 
@@ -394,25 +388,103 @@ var FrameWindow = function() {
     searchGroup.margins = [0, 0, 0, 0];
     searchGroup.spacing = 0;
 
-    var searchField = searchGroup.add('edittext', undefined, '', {
-      multiline: false,
-      name: 'searchField',
+    var searchSubGroup = searchGroup.add('group', undefined, {
+      name: 'searchSubGroup',
+      orientation: 'column',
     });
-    cls.prototype.searchField = searchField;
 
+
+    var searchInfoField = searchSubGroup.add(
+      'statictext',
+      undefined,
+      'Filter list (eg. \'1-20\'  or  \'1-20, 25, 30\')',
+      {
+        name: 'searchInfoField',
+      }
+    );
+    searchSubGroup.margins = [0, 0, 0, 0];
+    searchSubGroup.spacing = 0;
+
+    var searchField = searchSubGroup.add(
+      'edittext',
+      undefined,
+      '',
+      {
+        multiline: false,
+        name: 'searchField',
+      }
+    );
+    cls.prototype.searchField = searchField;
+    //
     searchField.onChanging = function() {
-      searchfield_onChanged(searchField.text);
-    };
-    searchField.onChanged = function() {
-      searchfield_onChanged(searchField.text);
+      try {
+        searchfield_onChanged(this.text);
+      } catch (e) {
+        // if (e)
+        catchError(e);
+      }
     };
 
     /**
-     * [searchfield description]
+     * Filters the list of frames by the given range.
      * @param  {[type]} text [description]
      */
     function searchfield_onChanged(text) {
-      $.writeln(getRanges(text));
+      text = text.replace(/([^0-9,-]+)/gi, '');
+      text = text.replace(/,{2,}/g, ',');
+
+      var listItem = w.findElement('listItem');
+
+      if (text.length === 0) {
+        listItem.removeAll();
+        setlist(
+          w,
+          3,
+          data.item(index).exists.names,
+          data.item(index).exists.dates,
+          data.item(index).exists.sizes
+        );
+        return;
+      }
+
+      try {
+        var item = data.item(mainWindow.getSelection());
+        var arr = getArrayFromRange(text, item.duration);
+
+        if (arr.length == 0) {
+          return;
+        }
+
+        var paddedIdx;
+        var filteredNames = [];
+        var filteredDates = [];
+        var filteredSizes = [];
+
+        for (var i = 0; i < item.exists.names.length; i++) {
+          var name = item.exists.names[i];
+          var date = item.exists.dates[i];
+          var size = item.exists.sizes[i];
+          for (var j = 0; j < arr.length; j++) {
+            paddedIdx = pad(arr[j], item.padding);
+            if (name.indexOf(paddedIdx) > -1) {
+              filteredNames.push(name);
+              filteredDates.push(date);
+              filteredSizes.push(size);
+            };
+          }
+        }
+
+        listItem.removeAll();
+        setlist(
+          w,
+          3,
+          filteredNames,
+          filteredDates,
+          filteredSizes
+        );
+      } catch (e) {
+        $.writeln(e);
+      }
     };
 
     var listGroup = w.add('group', undefined, {
@@ -434,8 +506,35 @@ var FrameWindow = function() {
     listItem.margins = 0;
     listItem.spacing = 0;
     listItem.onDoubleClick = function() {
+      if (!(listItem.selection)) {
+        return;
+      }
+
+      var existingFiles = data.item(index).exists;
+      var idx = existingFiles.names.indexOf(listItem.selection[0].text);
+      var file = new File(existingFiles.fsNames[idx]);
+
       try {
-        app.project.renderQueue.showWindow(true);
+        var imageWindow = new Window('dialog', file.displayName);
+        var img = imageWindow.add(
+          'image',
+          undefined,
+          file
+        );
+
+        var infoField1 = imageWindow.add(
+          'statictext',
+          undefined,
+          file.displayName,
+          {
+            name: 'infoField1',
+          }
+        );
+
+        img.size = [512, 512];
+        imageWindow.show();
+
+        // app.project.renderQueue.showWindow(true);
       } catch (e) {
         catchError(e);
       }
@@ -550,7 +649,8 @@ var FrameWindow = function() {
     button_cancel.spacing = 0;
 
     searchGroup.size = [initX, 20];
-    searchField.size = [initX, 20];
+    searchInfoField.size = [initX * 0.333, 20];
+    searchField.size = [initX * 0.666, 20];
 
     infoGroup1.size = [initX, 20];
     infoGroup2.size = [initX, 20];
@@ -568,7 +668,9 @@ var FrameWindow = function() {
 
     w.onResizing = w.onResize = function() {
       searchGroup.size = [w.size.width, 20];
-      searchField.size = [w.size.width, 20];
+      searchInfoField.size = [w.size.width * 0.333, 20];
+      searchField.size = [w.size.width * 0.666, 20];
+
       infoGroup1.size = [w.size.width, 20];
       infoGroup2.size = [w.size.width, 20];
       infoGroup3.size = [w.size.width, 20];
@@ -585,9 +687,6 @@ var FrameWindow = function() {
 
     return w;
   }
-
-  var state = false;
-  var index;
 
   var cls = function() {
     var window;

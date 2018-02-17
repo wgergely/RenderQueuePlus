@@ -395,7 +395,7 @@ var Data = function() {
           dataObj.rqIndex = i;
           dataObj.omIndex = j;
           dataObj.comp = rqItem.comp;
-          dataObj.compname = dataObj.comp.name;
+          dataObj.compname = fileNameSafeString(dataObj.comp.name);
 
           dataObj.file = function() {
             if (dataObj.ready) {
@@ -457,8 +457,6 @@ var Data = function() {
             dates: null,
             count: null,
           };
-
-
 
           dataObj = setData(dataObj, rqItem, omItem);
           DATA.push(dataObj);

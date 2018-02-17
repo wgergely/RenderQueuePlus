@@ -1,0 +1,36 @@
+{
+  "name": "renderqueueplus",
+  "version": "1.0.0",
+  "description": "Render output manager for After Effects",
+  "main": "RenderQueue+.jsx",
+  "dependencies": {
+    "eslint": "^4.17.0"
+  },
+  "devDependencies": {
+    "eslint-config-google": "^0.9.1"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/wgergely/RenderQueuePlus.git"
+  },
+  "keywords": [
+    "After",
+    "Effects",
+    "render",
+    "manager",
+    "background",
+    "render",
+    "output",
+    "control",
+    "versioning"
+  ],
+  "author": "Gergely Wootsch",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/wgergely/RenderQueuePlus/issues"
+  },
+  "homepage": "https://github.com/wgergely/RenderQueuePlus#readme"
+}

@@ -31,7 +31,6 @@ var rqPlusIsValid = false;
 
     rqPlusIsValid = false;
     return;
-
   }
     rqPlusIsValid = true;
 })();

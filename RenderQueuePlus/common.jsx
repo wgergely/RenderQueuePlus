@@ -47,33 +47,83 @@ function pad(a, b) {
 
 
 /**
+ * Returns array of unique values.
+ * @param  {[type]} a [description]
+ * @return {[type]}   [description]
+ */
+function uniq(a) {
+  var seen = {};
+  return a.filter(function(item) {
+    return seen.hasOwnProperty(item) ? false : (seen[item] = true);
+  });
+}
+
+/**
  * Converts a range to an array of numbers
  * eg. '1-250' results in [1,2,3,..,250].
  * http://stackoverflow.com/questions/2270910/how-to-convert-sequence-of-numbers-in-an-array-to-range-of-numbers
  * @param  {string} string [description]
+ * @param  {string} limit [description]
  * @return {array}       [description]
  */
 function getArrayFromRange(string, limit) {
-   var match = string.match(/(\d*)(-+)(\d*)/);
-   if (!(match)) {
-     return [];
-   }
-   var start = parseInt(match[1]);
-   var end = parseInt(match[3]);
-   if (start > end) {
-     start = parseInt(match[3]);
-     end = parseInt(match[1]);
-   };
-   var duration = end - start;
-   if (duration > limit) {
-     return [];
-   }
-   var arr = [];
-   for (start; start <= end; start++) {
-     arr.push(start);
-   }
-   return arr;
- }
+  if (string.indexOf(',') > 0) {
+    var returnArr = [];
+    string = string.split(',');
+    for (var i = 0; i < string.length; i++) {
+      if (string[i].indexOf('-') > -1) {
+        // range
+        returnArr = returnArr.concat(makeArray(string[i]));
+      } else {
+        // single number
+        var match = string[i].match(/(\d*)/);
+        if (match) {
+          returnArr.push(parseInt(string[i]));
+        }
+      }
+    }
+    return uniq(returnArr);
+  } else {
+    if (string.indexOf('-') > -1) {
+      // range
+      return makeArray(string);
+    } else {
+      // single number
+      return [parseInt(string)];
+    }
+  }
+
+  /**
+   * Private convenience function to create an array from a range string.
+   * @param  {strint} string eg. 1-20
+   * @return {array}        array of number
+   */
+  function makeArray(string) {
+    var match = string.match(/(\d*)(-+)(\d*)/);
+    if (!(match)) {
+      return [];
+    }
+    var start = parseInt(match[1]);
+    var end = parseInt(match[3]);
+    if (start > end) {
+      start = parseInt(match[3]);
+      end = parseInt(match[1]);
+    };
+
+    var duration = end - start;
+    if (duration > limit) {
+      end = limit;
+    }
+
+    var arr = [];
+    for (start; start <= end; start++) {
+      arr.push(start);
+    }
+    return arr;
+  }
+}
+
+
 /**
  * Returns a string representation of an array.
  * eg. [1,2,3,..,250] results in '1-250'.
@@ -94,7 +144,7 @@ function getRanges(array) {
     }
     ranges.push(rstart == rend ? rstart + '' : rstart + '-' + rend);
   }
-  return ranges;
+  return ranges.join(', ');
 };
 
 /**
@@ -164,7 +214,6 @@ Array.prototype.indexOf || (Array.prototype.indexOf = function(a, b) {
   return -1;
 });
 
-
 /**
  * Imports a given footage path to the project.
  * Creates a 'prerenders' folder with 'comp' and 'verion' subfolders
@@ -173,6 +222,7 @@ Array.prototype.indexOf || (Array.prototype.indexOf = function(a, b) {
  * @param  {[type]} sequence [description]
  * @param  {[type]} compName [description]
  * @param  {[type]} version  [description]
+ * @return {[type]}          [description]
  */
 function importFootage(inPath, sequence, compName, version) {
   /**
@@ -222,7 +272,7 @@ function importFootage(inPath, sequence, compName, version) {
   }
 
   for (i = 1; i <= r.items.length; i++) {
-    if (r.item(i).name === compName) {
+    if (fileNameSafeString(r.item(i).name) === fileNameSafeString(compName)) {
       cExists = true;
       c = r.item(i);
       break;
@@ -255,11 +305,12 @@ function importFootage(inPath, sequence, compName, version) {
       );
       footageItem.remove();
       footageItem = v.item(i);
-      break;
     }
   }
   footageItem.parentFolder = v;
   app.endUndoGroup();
+
+  return footageItem;
 }
 
 
@@ -315,7 +366,7 @@ function catchError(e) {
       source = source.split('\n');
       var ln = '';
       for (var i = 0; i < source.length; i++) {
-        ln += String(pad(i+1, 4)) + '  '+ String(source[i]);
+        ln += String(pad(i + 1, 4)) + '  ' + String(source[i]) + '\n';
       }
       source = ln;
     } else if (prop == 'start') {
@@ -341,3 +392,15 @@ function catchError(e) {
   );
   alertScroll(SCRIPT_NAME, MESSAGE);
 };
+
+/**
+ * Returns a filename safe string
+ * @param  {[type]} str [description]
+ * @return {[type]}     [description]
+ */
+function fileNameSafeString(str) {
+  return str
+    .replace(/([^a-z0-9]+)/gi, '_')
+    .replace(/-{2,}/g, '_')
+    .toLowerCase();
+}
