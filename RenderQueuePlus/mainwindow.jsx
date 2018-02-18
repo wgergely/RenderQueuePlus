@@ -71,7 +71,13 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           style: 'toolbutton',
         }
       );
-      batchButton.onClick = batchButton_onClick;
+      batchButton.onClick = function() {
+        try {
+          batchButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
       batchButton.size = [elemSize, elemSize];
       batchButton.alignment = 'left';
       batchButton.enabled = false;
@@ -118,7 +124,13 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           style: 'toolbutton',
         }
       );
-      browseButton.onClick = browseButton_onClick;
+      browseButton.onClick = function() {
+        try {
+          browseButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
       browseButton.size = [elemSize, elemSize];
       browseButton.enabled = false;
 
@@ -131,7 +143,13 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           style: 'toolbutton',
         }
       );
-      framesButton.onClick = framesButton_onClick;
+      framesButton.onClick = function() {
+        try {
+          framesButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
       framesButton.size = [elemSize, elemSize];
       framesButton.enabled = false;
 
@@ -144,7 +162,13 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           style: 'toolbutton',
         }
       );
-      refreshButton.onClick = refreshButton_onClick;
+      refreshButton.onClick = function() {
+        try {
+          refreshButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
       refreshButton.size = [elemSize, elemSize];
 
       var settingsButton = controlsGroup1.add(
@@ -154,7 +178,13 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         name: 'settingsButton',
         style: 'toolbutton',
       });
-      settingsButton.onClick = settingsButton_onClick;
+      settingsButton.onClick = function() {
+        try {
+          settingsButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
       settingsButton.size = [elemSize, elemSize];
       settingsButton.alignment = 'right';
 
@@ -643,7 +673,6 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
 
   /**
    * Review the selected render output in external player
-   * @return {[type]} [description]
    */
   function playButton_onClick() {
     var omItem = data.getOutputModule(
@@ -654,113 +683,94 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     var pathcontrol = new Pathcontrol();
     pathcontrol.initFromOutputModule(omItem);
 
-    if (listItem.selection) {
-      var player = getSetting('player');
-      var index = listItem.selection.index;
+    if (!(listItem.selection)) {
+      return;
+    }
 
-      var rvPath = getSetting('rv_bin');
-      var rvCall = getSetting('rv_call');
+    var rvPath = getSetting('rv_bin');
+    var rvCall = getSetting('rv_call');
+    var djvPath = getSetting('djv_bin');
+    var djvCall = getSetting('djv_call');
 
-      var rvUsePush = getSetting('rv_usepush');
-      var rvpushPath = getSetting('rvpush_bin');
+    var item = data.item(listItem.selection.index);
 
-      var djvPath = getSetting('djv_bin');
-      var djvCall = getSetting('djv_call');
-      var item = data.item(index);
-      var sequencePath = item.file.fsName;
-      var file = new File(settings.tempFolder.fullName + '/_playercall.bat');
-      var cmd;
+    var sequencePath = item.file.fsName;
+    var file = new File(settings.tempFolder.fullName + '/_playercall.bat');
+    var cmd;
 
-      if (player === 'rv') {
-        if (rvPath == 'null' || rvpushPath == 'null') {
-          Window.alert(
-            'RV or RV Push path is not set. Check preferences.',
-            SCRIPT_NAME
+    if (getSetting('player') === 'rv') {
+      if (getSetting('rv_bin') === null) {
+        Window.alert(
+          'RV is selected as the current player but no path has been set.\nCheck the preferences.',
+          SCRIPT_NAME
+        );
+        return;
+      }
+
+      if (item.exists.fsNames.length < 1) {
+        Window.alert(
+          'No frames have been rendered yet.',
+          SCRIPT_NAME
+        );
+        return;
+      }
+
+      if (pathcontrol.getPadding() > 0) {
+        var rvSequencePath = (
+          sequencePath.slice(0, -4).slice(0, -1 * (item.padding + 2)) +
+          '%%0' + item.padding + 'd' +
+          '.' + item.ext
+        );
+
+        var rvRange = item.startframe + '-' + item.endframe;
+
+        cmd = (
+          '\"' + getSetting('rv_bin') + '\"' + ' ' +
+          '\"' + rvSequencePath + '\"' + ' ' +
+          rvRange + ' ' + rvCall
+        );
+      } else {
+        if (rvUsePush == 'false') {
+          cmd = (
+            '\"' + rvPath + '\"' + ' ' + '\"' +
+            sequencePath + '\"' + ' ' + rvCall
           );
-          return false;
-        }
-        if (item.exists.fsNames[0]) {
-          if (pathcontrol.getPadding() > 0) {
-            var rvSequencePath = (
-              sequencePath.slice(0, -4).slice(0, -1 * (item.padding + 2)) +
-              '%%0' + item.padding + 'd' +
-              '.' + item.ext
-            );
-
-            var rvRange = item.startframe + '-' + item.endframe;
-
-            if (rvUsePush == 'false') {
-              cmd = (
-                '\"' + rvPath + '\"' + ' ' + '\"' +
-                rvSequencePath + '\"' + ' ' +
-                rvRange + ' ' + rvCall
-              );
-            }
-
-            if (rvUsePush == 'true' || rvpushPath) {
-              cmd = (
-                '\"' + rvpushPath + '\"' + ' set ' + '\"' +
-                rvSequencePath + '\"' + ' ' +
-                rvRange + ' ' + rvCall
-              );
-            }
-          }
-
-          if (pathcontrol.getPadding() === 0) {
-            if (rvUsePush == 'false') {
-              cmd = (
-                '\"' + rvPath + '\"' + ' ' + '\"' +
-                sequencePath + '\"' + ' ' + rvCall
-              );
-            }
-
-            if (rvUsePush == 'true') {
-              cmd = (
-                '\"' + rvpushPath + '\"' + ' set ' + '\"' +
-                sequencePath + '\"' + ' ' + rvCall
-              );
-            }
-          }
-        } else {
-          cmd = null;
         }
       }
+    } else if (getSetting('player') === 'djv') {
+      if (item.exists.fsNames[0]) {
+        var djvSequencePath = item.exists.fsNames[0];
 
-      if (player === 'djv') {
-        if (item.exists.fsNames[0]) {
-          var djvSequencePath = item.exists.fsNames[0];
-
-          if (pathcontrol.getPadding() > 0) {
-            cmd = (
-              '\"' + djvPath + '\"' + ' ' + '\"' +
-              djvSequencePath + '\"' + ' -seq Range -playback_speed ' +
-              Math.round(1 / item.comp.frameDuration) + ' ' + djvCall
-            );
-          }
-
-          if (pathcontrol.getPadding() === 0) {
-            cmd = (
-              '\"' + djvPath + '\"' + ' ' + '\"' +
-              djvSequencePath + '\"' + ' ' + djvCall
-            );
-          }
-        } else {
-          cmd = null;
+        if (pathcontrol.getPadding() > 0) {
+          cmd = (
+            '\"' + djvPath + '\"' + ' ' + '\"' +
+            djvSequencePath + '\"' + ' -seq Range -playback_speed ' +
+            Math.round(1 / item.comp.frameDuration) + ' ' + djvCall
+          );
         }
+
+        if (pathcontrol.getPadding() === 0) {
+          cmd = (
+            '\"' + djvPath + '\"' + ' ' + '\"' +
+            djvSequencePath + '\"' + ' ' + djvCall
+          );
+        }
+      } else {
+        cmd = null;
       }
+    }
 
-      if (cmd) {
-        var string;
-        if (File.fs === 'Windows') {
-          string = '@echo off\n' +
-            'start "" ' + cmd + '\n' +
-            'exit /b';
+    if (cmd) {
+      var string;
+      if (File.fs === 'Windows') {
+        string = '@echo off\n' +
+          'start "" ' + cmd + '\n' +
+          'exit /b';
 
-          file.open('w');
-          file.write(string);
-          file.close();
-          file.execute();
-        }
+        file.open('w');
+        file.write(string);
+        file.close();
+        file.execute();
       }
     }
   }
@@ -769,31 +779,16 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
    * Reveal the selected render output in the explorer
    */
   function browseButton_onClick() {
-    if (listItem.selection) {
-      var index = listItem.selection.index;
-      var f = data.item(index).file;
-      var p = f.parent;
-
-      if (p.exists) {
-        p.execute();
-      } else {
-        if (p.parent.exits) {
-          p.parent.execute();
-        } else {
-          if (p.parent.parent.exists) {
-            p.parent.parent.execute();
-          } else {
-            if (p.parent.parent.parent.exists) {
-              p.parent.parent.parent.execute();
-            } else {
-              if (p.parent.parent.parent.parent.exists) {
-                p.parent.parent.parent.parent.execute();
-              }
-            }
-          }
-        }
-      }
+    var sel = cls.prototype.getSelection();
+    if (sel === null) {
+      return;
     }
+
+    var index = listItem.selection.index;
+    var f = data.item(index).file;
+    var p = f.parent;
+
+    reveal(p);
   }
 
   /**

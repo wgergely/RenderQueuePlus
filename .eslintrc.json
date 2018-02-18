@@ -11,6 +11,7 @@
     "linebreak-style": "off",
     "camelcase": "off",
     "no-var": "off",
+    "no-extend-native": "off",
     "no-unused-vars": "warn",
     "max-len": "warn",
     "no-extend-native": "warn"

@@ -81,7 +81,6 @@ var Settings = function(thisObj) {
     settings.player = 'rv';
 
     settings.rv = {};
-    settings.rv.rv_usepush = null;
 
     var rvHelpFile = new File(
       scriptFile.parent.absoluteURI + '/docs/rvHelp.txt'
@@ -91,9 +90,7 @@ var Settings = function(thisObj) {
     rvHelpFile.close();
 
     settings.rv.rv_bin = null;
-    settings.rv.rvpush_bin = null;
     settings.rv.rv_call = null;
-    settings.rv.rvpush_call = null;
 
     settings.djv = {};
 
@@ -109,9 +106,6 @@ var Settings = function(thisObj) {
 
     settings.aerender = {};
     settings.aerender.aerender_bin = null;
-    settings.aerender.aerender_serverroot = null;
-    settings.aerender.instances = null;
-    settings.aerender.dialog = null;
 
     settings.pathcontrol = {};
     settings.pathcontrol.pathcontrol_help = '';
@@ -132,25 +126,6 @@ var Settings = function(thisObj) {
     setSetting('rv_bin', settings.rv.rv_bin);
 
     setUIString('rvPickString', 'File Set: \'' + getSetting('rv_bin') + '\'');
-  }
-
-  /**
-   * Set rvpush.exe path
-   */
-  function pickRVPushButton_onClick() {
-    var file = new File('/');
-    file = file.openDlg(
-      'Where is \'rvpush.exe\' located?',
-      'Windows exe files:*.exe'
-    );
-
-    settings.rv.rvpush_bin = file.fsName;
-    setSetting('rvpush_bin', settings.rv.rvpush_bin);
-
-    setUIString(
-      'rvpushPickString',
-      'File Set: \'' + getSetting('rvpush_bin') + '\''
-    );
   }
 
   /**
@@ -187,14 +162,6 @@ var Settings = function(thisObj) {
     }
 
     setSetting('player', settings.player);
-  }
-
-  /**
-   * Set rvpush as player
-   */
-  function rvPushCheckbox_onClick() {
-    settings.rv.rv_usepush = this.value;
-    setSetting('rv_usepush', settings.rv.rv_usepush);
   }
 
   /**
@@ -255,18 +222,39 @@ var Settings = function(thisObj) {
    */
   function pathcontrolExploreButton_onClick() {
     var folder = new Folder(settings.pathcontrol.fsName);
-    if (folder.exists) {
-      folder.execute();
-    } else {
-      if (folder.parent.exists) {
-        folder.parent.execute();
-      } else {
-        if (folder.parent.parent.exists) {
-          folder.parent.parent.execute();
-        }
-      }
-    }
+    reveal(folder);
   }
+
+  /**
+   * Reveals the currently set root path Control root folder.
+   */
+  function aerenderExploreButton_onClick() {
+    var bin = new Folder(getSetting('aerender_bin'));
+    reveal(bin.parent);
+  }
+
+  /**
+   * Reveals the currently set root path Control root folder.
+   */
+  function aerenderPickButton_onClick() {
+    var aerender = new File('/');
+    aerender = aerender.openDlg(
+      'Select the location of aerender.exe',
+      'aerender.exe:aerender.exe'
+    );
+
+    if (aerender) {
+      string = aerender.fsName;
+    } else {
+      string = null;
+    };
+    settings.aerender.fsName = aerender.fsName;
+    setSetting('aerender_bin', settings.aerender.fsName);
+    setUIString(
+      'aerender_fsName',
+      ellipsis2(getSetting('aerender_bin'))
+    );
+  };
 
   /**
    * Saves the custom rv call string
@@ -391,15 +379,11 @@ var Settings = function(thisObj) {
     settings.player = getSetting('player');
 
     settings.rv.rv_bin = getSetting('rv_bin');
-    settings.rv.rv_usepush = getSetting('rv_usepush');
-    settings.rv.rvpush_bin = getSetting('rvpush_bin');
     settings.rv.rv_call = getSetting('rv_call');
     if (!settings.rv.rv_call) {
       settings.rv.rv_call = '';
       setSetting('rv_call', '');
     }
-
-    settings.rv.rvpush_call = getSetting('rvpush_call');
 
     settings.djv.djv_bin = getSetting('djv_bin');
     settings.djv.djv_call = getSetting('djv_call');
@@ -409,47 +393,56 @@ var Settings = function(thisObj) {
     }
 
     settings.aerender.aerender_bin = function() {
-      var version = parseFloat(app.version);
       var aerender = new File('/');
-      var string;
 
-      if (File.fs == 'Windows') {
-        if (version >= 16 && version < 16.5) {
-          aerender.changePath(AE_RENDER_PATHS['CC 2020']);
-        } else if (version >= 15.5 && version < 16) {
-          aerender.changePath(AE_RENDER_PATHS['CC 2019']);
-        } else if (version >= 15 && version < 15.5) {
-          aerender.changePath(AE_RENDER_PATHS['CC 2018']);
-        } else if (version >= 14 && version < 14.3) {
-          aerender.changePath(AE_RENDER_PATHS['CC 2017']);
-        } else if (version >= 13.8 && version < 14) {
-          aerender.changePath(AE_RENDER_PATHS['CC 2015.3']);
-        } else if (version >= 13.5 && version < 13.8) {
-          aerender.changePath(AE_RENDER_PATHS['CC 2015']);
-        } else if (version >= 13 && version < 13.5) {
-          aerender.changePath(AE_RENDER_PATHS['CC 2014']);
-        } else if (version >= 12 && version < 12.3) {
-          aerender.changePath(AE_RENDER_PATHS['CC']);
-        } else if (version >= 11 && version < 11.1) {
-          aerender.changePath(AE_RENDER_PATHS['CS6']);
-        };
+      if (getSetting('aerender_bin')) {
+        aerender.changePath(getSetting('aerender_bin'));
+        if (aerender.exists) {
+          setSetting('aerender_bin', aerender.fsName);
+          return;
+        }
       }
 
+      var version = parseFloat(app.version);
+      var string;
+
+      if (version >= 16 && version < 16.5) {
+        aerender.changePath(AE_RENDER_PATHS['CC 2020']);
+      } else if (version >= 15.5 && version < 16) {
+        aerender.changePath(AE_RENDER_PATHS['CC 2019']);
+      } else if (version >= 15 && version < 15.5) {
+        aerender.changePath(AE_RENDER_PATHS['CC 2018']);
+      } else if (version >= 14 && version < 14.3) {
+        aerender.changePath(AE_RENDER_PATHS['CC 2017']);
+      } else if (version >= 13.8 && version < 14) {
+        aerender.changePath(AE_RENDER_PATHS['CC 2015.3']);
+      } else if (version >= 13.5 && version < 13.8) {
+        aerender.changePath(AE_RENDER_PATHS['CC 2015']);
+      } else if (version >= 13 && version < 13.5) {
+        aerender.changePath(AE_RENDER_PATHS['CC 2014']);
+      } else if (version >= 12 && version < 12.3) {
+        aerender.changePath(AE_RENDER_PATHS['CC']);
+      } else if (version >= 11 && version < 11.1) {
+        aerender.changePath(AE_RENDER_PATHS['CS6']);
+      };
 
       if (aerender.exists) {
         string = aerender.fsName;
       } else {
-        var text = 'Aerender.exe cannot be found.\n';
+        var text = 'Aerender.exe could not be located.\n';
         text += 'Do you want to manually select it?';
+
         var prompt = confirm(
           text,
-          'aerender'
+          'Where is aerender.exe?'
         );
+
         if (prompt) {
           aerender = aerender.openDlg(
-            'Select the Location of aerender',
+            'Select the location of aerender.exe',
             'aerender.exe:aerender.exe'
           );
+
           if (aerender) {
             string = aerender.fsName;
           } else {
@@ -459,13 +452,10 @@ var Settings = function(thisObj) {
           string = null;
         }
       }
+
       setSetting('aerender_bin', string);
       return string;
     }();
-
-    settings.aerender.aerender_serverroot = getSetting('aerender_serverroot');
-    settings.aerender.aerender_instances = getSetting('aerender_instances');
-    settings.aerender.aerender_dialog = getSetting('aerender_dialog');
 
     settings.pathcontrol.basepattern = getSetting('pathcontrol_basepattern');
     if (!settings.pathcontrol.basepattern) {
@@ -526,7 +516,7 @@ var Settings = function(thisObj) {
       var pathcontrol_basepatternHeader = pathcontrol_basepatternGroup.add(
         'statictext',
         undefined,
-        'Path to the renders folder:',
+        'Set output path:',
         {
           name: 'pathcontrol_basepatternHeader',
         }
@@ -554,18 +544,30 @@ var Settings = function(thisObj) {
         }
       );
       pathcontrolBrowseButton.size = [70, 25];
-      pathcontrolBrowseButton.onClick = pathcontrolExploreButton_onClick;
+      pathcontrolBrowseButton.onClick = function() {
+        try {
+          pathcontrolExploreButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
 
       var pathcontrolHelpButton = pathcontrol_basepatternGroup.add(
         'button',
         undefined,
-        'Pick New',
+        'Pick',
         {
           name: 'pathcontrolPickButton',
         }
       );
       pathcontrolHelpButton.size = [70, 25];
-      pathcontrolHelpButton.onClick = pathcontrolPickButton_onClick;
+      pathcontrolHelpButton.onClick = function() {
+        try {
+          pathcontrolPickButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
 
       var pathcontrolResultGroup = pathcontrolPanel.add(
         'group',
@@ -578,7 +580,7 @@ var Settings = function(thisObj) {
       var pathcontrol_fsNameLabel = pathcontrolResultGroup.add(
         'statictext',
         undefined,
-        'To set a path relative to the active project use\n./  or  ../',
+        'To set a path relative to the active project you can use\n./  or  ../',
         {
           name: 'pathcontrol_fsNameLabel',
           multiline: true,
@@ -595,6 +597,72 @@ var Settings = function(thisObj) {
         }
       );
       pathcontrol_fsName.size = [450, 45];
+
+      // ====================================================
+
+      var aerenderPanel = binGroup.add(
+        'panel',
+        undefined,
+        'Aerender.exe',
+        {
+          borderstyle: 'gray',
+          name: 'aerenderPanel',
+        }
+      );
+      aerenderPanel.alignChildren = ['fill', 'fill'];
+
+      var aerender_pathGroup = aerenderPanel.add(
+        'group',
+        undefined,
+        {
+          name: 'aerender_basepatternGroup',
+        }
+      );
+
+      var aerender_fsName = aerender_pathGroup.add(
+        'statictext',
+        undefined,
+        '-',
+        {
+          name: 'aerender_fsName',
+        }
+      );
+      aerender_fsName.size = [450, 45];
+
+      var aerenderBrowseButton = aerender_pathGroup.add(
+        'button',
+        undefined,
+        'Reveal',
+        {
+          name: 'aerenderExploreButton',
+        }
+      );
+      aerenderBrowseButton.size = [70, 25];
+      aerenderBrowseButton.onClick = function() {
+        try {
+          aerenderExploreButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
+
+      var aerenderPickButton = aerender_pathGroup.add(
+        'button',
+        undefined,
+        'Pick',
+        {
+          name: 'aerenderPickButton',
+        }
+      );
+      aerenderPickButton.size = [70, 25];
+      aerenderPickButton.onClick = function() {
+        try {
+          aerenderPickButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
+
 
       // ====================================================
 
@@ -625,18 +693,13 @@ var Settings = function(thisObj) {
           name: 'rvCheckbox',
         }
       );
-      rvCheckbox.onClick = rvCheckbox_onClick;
-
-      var rvPushCheckbox = rvCheckboxGroup.add(
-        'checkbox',
-        undefined,
-        'Use RV Push',
-        {
-          name: 'rvPushCheckbox',
+      rvCheckbox.onClick = function() {
+        try {
+          rvCheckbox_onClick();
+        } catch (e) {
+          catchError(e);
         }
-      );
-      rvPushCheckbox.onClick = rvPushCheckbox_onClick;
-
+      };
 
       var rvCallStringGroup = rvPanel.add(
         'group',
@@ -677,7 +740,13 @@ var Settings = function(thisObj) {
         }
       );
       rvHelpButton.size = [150, 25];
-      rvHelpButton.onClick = rvHelpButton_onClick;
+      rvHelpButton.onClick = function() {
+        try {
+          rvHelpButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
 
       var rvGroup = rvPanel.add(
         'group',
@@ -697,7 +766,13 @@ var Settings = function(thisObj) {
         }
       );
       pickRVButton.size = [150, 25];
-      pickRVButton.onClick = pickRVButton_onClick;
+      pickRVButton.onClick = function() {
+        try {
+          pickRVButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
 
       var rvPickString = rvGroup.add(
         'statictext',
@@ -715,76 +790,6 @@ var Settings = function(thisObj) {
       );
       rvPickString.alignment = 'right';
       rvPickString.size = [450, 25];
-
-
-      var rvpushCallStringGroup = rvPanel.add(
-        'group',
-        undefined,
-        {
-          name: 'rvpushCallStringGroup',
-        }
-      );
-      rvpushCallStringGroup.orientation = 'row';
-
-      var rvpushCallStringHeader = rvpushCallStringGroup.add(
-        'statictext',
-        undefined,
-        'RVPush Custom Switches:',
-        {
-          name: 'rvpushCallStringHeader',
-        }
-      );
-      rvpushCallStringHeader.size = [150, 25];
-
-      var rvpushCallString = rvpushCallStringGroup.add(
-        'edittext',
-        undefined,
-        '',
-        {
-          name: 'rvpushCallString',
-        }
-      );
-      rvpushCallString.size = [260, 25];
-
-
-      var rvpushGroup = rvPanel.add(
-        'group',
-        undefined,
-        {
-          name: 'rvpushGroup',
-        }
-      );
-      rvpushGroup.orientation = 'row';
-
-      var pickRVPushButton = rvpushGroup.add(
-        'button',
-        undefined,
-        'Set RVPush Path',
-        {
-          name: 'pickRVPushButton',
-        }
-      );
-      pickRVPushButton.size = [150, 25];
-      pickRVPushButton.onClick = pickRVPushButton_onClick;
-
-      var rvpushPickString = rvpushGroup.add(
-        'statictext',
-        undefined,
-        'path not set',
-        {
-          name: 'rvpushPickString',
-        }
-      );
-      rvpushPickString.enabled = false;
-      var pen = rvpushPickString.graphics.newPen(
-        settingsPalette.graphics.PenType.SOLID_COLOR,
-        [0.7, 0.7, 0.7],
-        1
-      );
-      rvpushPickString.graphics.foregroundColor = pen;
-      rvpushPickString.alignment = 'right';
-      rvpushPickString.size = [450, 25];
-
 
       // ====================================================
 
@@ -815,7 +820,13 @@ var Settings = function(thisObj) {
           name: 'djvCheckbox',
         }
       );
-      djvCheckbox.onClick = djvCheckbox_onClick;
+      djvCheckbox.onClick = function() {
+        try {
+          djvCheckbox_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
 
       var djvCallStringGroup = djvPanel.add(
         'group',
@@ -857,7 +868,13 @@ var Settings = function(thisObj) {
         }
       );
       djvHelpButton.size = [150, 25];
-      djvHelpButton.onClick = djvHelpButton_onClick;
+      djvHelpButton.onClick = function() {
+        try {
+          djvHelpButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
 
       var djvGroup = djvPanel.add(
         'group',
@@ -877,7 +894,13 @@ var Settings = function(thisObj) {
         }
       );
       pickDJVButton.size = [150, 25];
-      pickDJVButton.onClick = pickDJVPushButton_onClick;
+      pickDJVButton.onClick = function() {
+        try {
+          pickDJVPushButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
 
       var djvPickString = djvGroup.add(
         'statictext',
@@ -926,32 +949,12 @@ var Settings = function(thisObj) {
         settingsPalette.findElement('djvCheckbox').value = true;
       }
 
-      if (!getSetting('rv_usepush')) {
-        if (getSetting('rv_usepush') === 'true') {
-          settingsPalette.findElement('rvPushCheckbox').value = true;
-        } else {
-          settingsPalette.findElement('rvPushCheckbox').value = false;
-        }
-      }
-
       if (!getSetting('rv_bin')) {
         setUIString('rvPickString', 'Path not set.');
       } else {
         setUIString(
           'rvPickString',
           '\'' + getSetting('rv_bin') + '\''
-        );
-      }
-
-      if (!getSetting('rvpush_bin')) {
-        setUIString(
-          'rvpushPickString',
-          'Path not set.'
-        );
-      } else {
-        setUIString(
-          'rvpushPickString',
-          '\'' + getSetting('rvpush_bin') + '\''
         );
       }
 
@@ -986,9 +989,32 @@ var Settings = function(thisObj) {
       }
 
       if (!(getSetting('pathcontrol_fsName') === '')) {
-        setUIString('pathcontrol_fsName', getSetting('pathcontrol_fsName'));
+        setUIString(
+          'pathcontrol_fsName',
+          ellipsis2(getSetting('pathcontrol_fsName'))
+        );
       } else {
-        setUIString('pathcontrol_fsName', 'No valid pattern has been set.');
+        setUIString('pathcontrol_fsName', 'No pattern has been set.');
+      }
+
+      if (getSetting('aerender_bin')) {
+        var aerender_bin = new File(getSetting('aerender_bin'));
+        if (aerender_bin.exists) {
+          setUIString(
+            'aerender_fsName',
+            ellipsis2(getSetting('aerender_bin'))
+          );
+        } else {
+          setUIString(
+            'aerender_fsName',
+            aerender_bin.parent.displayName + '/' + aerender_bin.displayName + ' does not exists.'
+          );
+        }
+      } else {
+        setUIString(
+          'aerender_fsName',
+          'aerender has not been set.'
+        );
       }
 
       settingsPalette.layout.layout(true);

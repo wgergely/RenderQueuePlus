@@ -148,16 +148,22 @@ function getRanges(array) {
 };
 
 /**
- * Clips strings to a number of characters
- * @param  {string}  inString The text to clip
- * @return {string}          Clipped text
+ * CLips the given string to the specified length:
+ * '...clipped text'
+ * @param  {string}  inString the text to clip
+ * @param  {number}  length   clip the string to this length
+ * @return {string}          the clipped text
  */
-function ellipsis(inString) {
+function ellipsis(inString, length) {
+  if (!(length)) {
+    var length = 100;
+  }
+
   if (inString) {
-    if (inString.length > 100) {
+    if (inString.length > length) {
       var head = inString.substr(0, 0);
       var dots = '...';
-      var tail = inString.substr(inString.length - 100, inString.length);
+      var tail = inString.substr(inString.length - length, inString.length);
       return head + dots + tail;
     }
     return inString;
@@ -165,6 +171,30 @@ function ellipsis(inString) {
     return '-';
   }
 };
+
+/**
+ * Clips the given string to the specified length.
+ * 'The clipped (...) text'
+ * @param  {string}  inString the text to clip
+ * @param  {number}  length   clip the string to this length
+ * @return {string}          the clipped text
+ */
+ function ellipsis2(inString, length) {
+   if (!(length)) {
+     var length = 75;
+   }
+   if (inString) {
+     if (inString.length > length) {
+       var head = inString.substr(0, Math.round(length/2));
+       var dots = ' ... ';
+       var tail = inString.substr(inString.length - Math.round(length/2), inString.length);
+       return head + dots + tail;
+     }
+     return inString;
+   } else {
+     return '-';
+   }
+ };
 
 /**
  * Formats a byte into a human readable string, eg 1024 -> '1KB'
@@ -404,3 +434,16 @@ function fileNameSafeString(str) {
     .replace(/-{2,}/g, '_')
     .toLowerCase();
 }
+
+
+/**
+ * Reveals the folder if exists, or it's parent.
+ * @param  {ExtendScriptFileObject} p the file or folder object to reveal
+ */
+function reveal(p) {
+  if (p.exists) {
+    p.execute();
+  } else {
+    reveal(p.parent);
+  }
+};

@@ -33,6 +33,7 @@ renderQueuePlus = function(thisObj) {
   var data = new Data();
   data.setData();
 
+  // Module globals
   var listItem;
   var listGroup;
   var palette;
