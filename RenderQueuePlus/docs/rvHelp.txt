@@ -1,3 +1,10 @@
+If running After Effects in a Shotgun enabled environment,
+or with RV deployed/installed this panel provides loose
+integration to review rendered outputs with RV.
+
+Use the 'Set RV Path' button to point to rv.exe.
+The following switches are accepted when calling RV:
+
 -c
                     Use region frame cache
 -l

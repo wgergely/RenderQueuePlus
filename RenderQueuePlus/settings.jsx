@@ -11,6 +11,7 @@ function getSetting(keyName) {
   }
 };
 
+
 /**
  * Private convenience function to set an internal setting
  * @param {string} keyName settings dictinary key
@@ -25,6 +26,7 @@ function setSetting(keyName, value) {
   );
   return app.settings.getSetting(SCRIPT_NAME, keyName);
 };
+
 
 /**
  * Returns the path for aerender
@@ -79,7 +81,6 @@ var Settings = function(thisObj) {
     settings.tempPath = settings.tempFolder.fsName;
 
     settings.player = 'rv';
-
     settings.rv = {};
 
     var rvHelpFile = new File(
@@ -91,18 +92,6 @@ var Settings = function(thisObj) {
 
     settings.rv.rv_bin = null;
     settings.rv.rv_call = null;
-
-    settings.djv = {};
-
-    var djvHelpFile = new File(
-      scriptFile.parent.absoluteURI + '/docs/djvHelp.txt'
-    );
-    djvHelpFile.open('r');
-    settings.djv.djv_help = djvHelpFile.read();
-    djvHelpFile.close();
-
-    settings.djv.djv_bin = null;
-    settings.djv.djv_call = null;
 
     settings.aerender = {};
     settings.aerender.aerender_bin = null;
@@ -129,73 +118,10 @@ var Settings = function(thisObj) {
   }
 
   /**
-   * Set DJView path
-   */
-  function pickDJVPushButton_onClick() {
-    var file = new File('/');
-    file = file.openDlg(
-      'Where is \'djv_view.exe\' located?',
-      'Windows exe files:*.exe'
-    );
-
-    settings.djv.djv_bin = file.fsName;
-    setSetting('djv_bin', settings.djv.djv_bin);
-
-    setUIString(
-      'djvPickString',
-      'File Set: \'' + getSetting('djv_bin') + '\''
-    );
-  }
-
-  /**
-   * [rvCheckbox_onClick description]
-   */
-  function rvCheckbox_onClick() {
-    settingsPalette.findElement('djvPanel').enabled = !this.value;
-    settingsPalette.findElement('rvPanel').enabled = this.value;
-    settingsPalette.findElement('djvCheckbox').value = !this.value;
-
-    if (this.value) {
-      settings.player = 'rv';
-    } else {
-      settings.player = 'djv';
-    }
-
-    setSetting('player', settings.player);
-  }
-
-  /**
-   * Set djview as viewer
-   */
-  function djvCheckbox_onClick() {
-    settingsPalette.findElement('rvPanel').enabled = !this.value;
-    settingsPalette.findElement('djvPanel').enabled = this.value;
-    settingsPalette.findElement('rvCheckbox').value = !this.value;
-
-    if (this.value) {
-      settings.player = 'djv';
-    } else {
-      settings.player = 'rv';
-    }
-
-    setSetting('player', settings.player);
-  }
-
-  /**
    * Show rv help
    */
   function rvHelpButton_onClick() {
     alertScroll('Help: RV Command Line Switches', settings.rv.rv_help);
-  }
-
-  /**
-   * Show djv help
-   */
-  function djvHelpButton_onClick() {
-    alertScroll(
-      'Help: DJV View Command Line Switches',
-      settings.djv.djv_help
-    );
   }
 
   /**
@@ -262,14 +188,6 @@ var Settings = function(thisObj) {
   function rvCallString_onChanged() {
     settings.rv.rv_call = this.text;
     setSetting('rv_call', settings.rv.rv_call);
-  }
-
-  /**
-   * Saves the custom djvew call string
-   */
-  function djvCallString_onChanged() {
-    settings.djv.djv_call = this.text;
-    setSetting('djv_call', settings.djv.djv_call);
   }
 
   /**
@@ -383,13 +301,6 @@ var Settings = function(thisObj) {
     if (!settings.rv.rv_call) {
       settings.rv.rv_call = '';
       setSetting('rv_call', '');
-    }
-
-    settings.djv.djv_bin = getSetting('djv_bin');
-    settings.djv.djv_call = getSetting('djv_call');
-    if (!settings.djv.djv_call) {
-      settings.djv.djv_call = '';
-      setSetting('djv_call', '');
     }
 
     settings.aerender.aerender_bin = function() {
@@ -677,30 +588,6 @@ var Settings = function(thisObj) {
       );
       rvPanel.alignChildren = ['fill', 'fill'];
 
-      var rvCheckboxGroup = rvPanel.add(
-        'group',
-        undefined,
-        {
-          name: 'rvCheckboxGroup',
-        }
-      );
-
-      var rvCheckbox = rvCheckboxGroup.add(
-        'checkbox',
-        undefined,
-        'Use RV for Playback',
-        {
-          name: 'rvCheckbox',
-        }
-      );
-      rvCheckbox.onClick = function() {
-        try {
-          rvCheckbox_onClick();
-        } catch (e) {
-          catchError(e);
-        }
-      };
-
       var rvCallStringGroup = rvPanel.add(
         'group',
         undefined,
@@ -790,136 +677,69 @@ var Settings = function(thisObj) {
       );
       rvPickString.alignment = 'right';
       rvPickString.size = [450, 25];
-
       // ====================================================
 
-      var djvPanel = binGroup.add(
+      var aboutPanel = binGroup.add(
         'panel',
         undefined,
-        'DJV View',
+        'About',
         {
           borderStyle: 'gray',
-          name: 'djvPanel',
+          name: 'aboutPanel',
         }
       );
-      djvPanel.alignChildren = ['fill', 'fill'];
+      aboutPanel.alignChildren = ['left', 'fill'];
 
-
-      var djvCheckboxGroup = djvPanel.add(
+      var aboutGroup1 = aboutPanel.add(
         'group',
         undefined,
         {
-          name: 'djvCheckboxGroup',
+          name: 'aboutGroup1',
         }
       );
-      var djvCheckbox = djvCheckboxGroup.add(
-        'checkbox',
-        undefined,
-        'Use DJV View for Playback',
-        {
-          name: 'djvCheckbox',
-        }
-      );
-      djvCheckbox.onClick = function() {
-        try {
-          djvCheckbox_onClick();
-        } catch (e) {
-          catchError(e);
-        }
-      };
 
-      var djvCallStringGroup = djvPanel.add(
-        'group',
-        undefined,
-        {
-          name: 'djvCallStringGroup',
-        }
-      );
-      djvCallStringGroup.orientation = 'row';
+      var info = aboutGroup1.add('statictext', undefined,
+      'Version: ' + VERSION + '\n' +
+      'Author: ' + AUTHOR + '\n' +
+      'Email: ' + EMAIL + '\n',
+      {name: 'aboutVersion', multiline: true});
+      info.size = [440, 50];
 
-      var djvCallStringHeader = djvCallStringGroup.add(
-        'statictext',
-        undefined,
-        'DJV Custom Switches:',
-        {
-          name: 'djvCallStringHeader',
-        }
-      );
-      djvCallStringHeader.size = [150, 25];
-
-      var djvCallString = djvCallStringGroup.add(
-        'edittext',
-        undefined,
-        '',
-        {
-          name: 'djvCallString',
-        }
-      );
-      djvCallString.size = [290, 25];
-      djvCallString.onChange = djvCallString_onChanged;
-      djvCallString.onChanged = djvCallString_onChanged;
-
-      var djvHelpButton = djvCallStringGroup.add(
+      var aboutWebsite = aboutGroup1.add(
         'button',
         undefined,
-        'djv Help',
+        'Website',
         {
-          name: 'djvHelpButton',
+          name: 'aboutWebsite',
         }
       );
-      djvHelpButton.size = [150, 25];
-      djvHelpButton.onClick = function() {
-        try {
-          djvHelpButton_onClick();
-        } catch (e) {
-          catchError(e);
-        }
+      aboutWebsite.size = [75, 15];
+      aboutWebsite.onClick = function() {
+        openLink('http://gergely-wootsch.com');
       };
 
-      var djvGroup = djvPanel.add(
-        'group',
-        undefined,
-        {
-          name: 'djvGroup',
-        }
-      );
-      djvGroup.orientation = 'row';
-
-      var pickDJVButton = djvGroup.add(
+      var aboutReadme = aboutGroup1.add(
         'button',
         undefined,
-        'Set DJV Path',
+        'About / Help',
         {
-          name: 'pickDJVButton',
+          name: 'aboutReadme',
         }
       );
-      pickDJVButton.size = [150, 25];
-      pickDJVButton.onClick = function() {
-        try {
-          pickDJVPushButton_onClick();
-        } catch (e) {
-          catchError(e);
-        }
+      aboutReadme.size = [75, 15];
+      aboutReadme.onClick = function() {
+        openLink('http://gergely-wootsch.com');
       };
 
-      var djvPickString = djvGroup.add(
-        'statictext',
-        undefined,
-        'djv path not yet set',
-        {
-          name: 'djvPickString',
-        }
-      );
-
-      djvPickString.graphics.foregroundColor = djvPickString.graphics.newPen(
-        settingsPalette.graphics.PenType.SOLID_COLOR,
-        [0.7, 0.7, 0.7],
-        1
-      );
-
-      djvPickString.alignment = 'right';
-      djvPickString.size = [450, 25];
-
+      // settings.lastmodified = LAST_MODIFIED;
+      // settings.version = VERSION;
+      // settings.name = SCRIPT_NAME;
+      // settings.author = AUTHOR;
+      // settings.email = EMAIL;
+      // settings.website = WEBSITE;
+      // settings.description = DESCRIPTION;
+      // settings.help = HELP;
+      // settings.scriptname = SCRIPT_NAME;
       // ====================================================
 
       var closeBtn = settingsPalette.add(
@@ -937,16 +757,7 @@ var Settings = function(thisObj) {
 
     this.show = function() {
       if (settings.player == 'rv') {
-        settingsPalette.findElement('djvPanel').enabled = false;
         settingsPalette.findElement('rvPanel').enabled = true;
-        settingsPalette.findElement('rvCheckbox').value = true;
-        settingsPalette.findElement('djvCheckbox').value = false;
-      }
-      if (settings.player == 'djv') {
-        settingsPalette.findElement('djvPanel').enabled = true;
-        settingsPalette.findElement('rvPanel').enabled = false;
-        settingsPalette.findElement('rvCheckbox').value = false;
-        settingsPalette.findElement('djvCheckbox').value = true;
       }
 
       if (!getSetting('rv_bin')) {
@@ -962,18 +773,6 @@ var Settings = function(thisObj) {
         setUIString('rvCallString', '');
       } else {
         setUIString('rvCallString', getSetting('rv_call'));
-      }
-
-      if (!getSetting('djv_bin')) {
-        setUIString('djvPickString', 'Path not set.');
-      } else {
-        setUIString('djvPickString', '\'' + getSetting('djv_bin') + '\'');
-      }
-
-      if (!getSetting('djv_call')) {
-        setUIString('djvCallString', '');
-      } else {
-        setUIString('djvCallString', getSetting('djv_call'));
       }
 
       if (!(getSetting('pathcontrol_basepattern') === '')) {

@@ -1,4 +1,6 @@
 renderQueuePlus = function(thisObj) {
+  var renderQueuePlus = this;
+
   var LAST_MODIFIED = '08/02/2018';
   var VERSION = '0.2.0';
   var SCRIPT_NAME = 'Render Queue+';
@@ -26,6 +28,7 @@ renderQueuePlus = function(thisObj) {
   // @include "framewindow.jsx"
   // @include "pathcontrol.jsx"
   // @include "mainwindow.jsx"
+  // @include "aeparchive.jsx"
 
   var settings = new Settings();
   settings.setbasepath();

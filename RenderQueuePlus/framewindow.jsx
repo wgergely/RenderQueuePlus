@@ -279,6 +279,7 @@ var FrameWindow = function() {
       }
     );
     deleteButton.size = [elemSize, elemSize];
+    deleteButton.helpTip = 'Delete selected file(s)';
     deleteButton.onClick = function() {
       try {
         deleteButton_onClick();
@@ -307,6 +308,7 @@ var FrameWindow = function() {
         style: 'toolbutton',
       }
     );
+    browseButton.helpTip = 'Reveal in explorer';
     browseButton.onClick = function() {
       try {
         browseButton_onClick();
@@ -325,6 +327,7 @@ var FrameWindow = function() {
         style: 'toolbutton',
       }
     );
+    importButton.helpTip = 'Import selected file(s) to project';
     importButton.onClick = function() {
       try {
         importButton_onClick();
@@ -343,6 +346,7 @@ var FrameWindow = function() {
         style: 'toolbutton',
       }
     );
+    incompleteButton.helpTip = 'Show incomplete or empty files';
     incompleteButton.onClick = function() {
       try {
         incompleteButton_onClick();
@@ -361,6 +365,7 @@ var FrameWindow = function() {
         style: 'toolbutton',
       }
     );
+    refreshButton.helpTip = 'Refresh';
     refreshButton.onClick = function() {
       try {
         refreshButton_onClick();
@@ -414,6 +419,8 @@ var FrameWindow = function() {
         name: 'searchField',
       }
     );
+    searchField.helpTip = 'Filter the list of files by entering a range, eg. 1-100,\n' +
+    'and/or numbers separated by comas, eg. 1,2,3,8';
     cls.prototype.searchField = searchField;
     //
     searchField.onChanging = function() {
@@ -533,10 +540,10 @@ var FrameWindow = function() {
 
         img.size = [512, 512];
         imageWindow.show();
-
-        // app.project.renderQueue.showWindow(true);
       } catch (e) {
-        catchError(e);
+        if (e.message !== 'Invalid image data') {
+          catchError(e);
+        }
       }
     };
 
@@ -556,6 +563,7 @@ var FrameWindow = function() {
             name: 'infoField4',
           }
         );
+        infoField4.helpTip = 'Output path';
 
         var infoGroup1 = w.add(
           'group',

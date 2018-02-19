@@ -61,6 +61,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       aerenderButton.size = [(elemSize * 1.5), elemSize];
       aerenderButton.alignment = 'left';
       aerenderButton.enabled = false;
+      aerenderButton.helpTip = 'Start background render';
 
       batchButton = controlsGroup1.add(
         'iconbutton',
@@ -81,6 +82,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       batchButton.size = [elemSize, elemSize];
       batchButton.alignment = 'left';
       batchButton.enabled = false;
+      batchButton.helpTip = 'Save a .bat file and start background render';
 
       UIsep = controlsGroup1.add(
         'iconbutton',
@@ -113,6 +115,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       playButton.size = [elemSize, elemSize];
       playButton.alignment = 'left';
       playButton.enabled = false;
+      playButton.helpTip = 'Review render output via external player';
 
 
       browseButton = controlsGroup1.add(
@@ -133,6 +136,27 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       };
       browseButton.size = [elemSize, elemSize];
       browseButton.enabled = false;
+      browseButton.helpTip = 'Reveal render output';
+
+      restoreButton = controlsGroup1.add(
+        'iconbutton',
+        undefined,
+        ICON_FILES.restoreComp2,
+        {
+          name: 'restoreButton',
+          style: 'toolbutton',
+        }
+      );
+      restoreButton.onClick = function() {
+        try {
+          restoreButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
+      restoreButton.size = [elemSize, elemSize];
+      restoreButton.enabled = false;
+      restoreButton.helpTip = 'Restore the project used to render the current version';
 
       framesButton = controlsGroup1.add(
         'iconbutton',
@@ -152,6 +176,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       };
       framesButton.size = [elemSize, elemSize];
       framesButton.enabled = false;
+      framesButton.helpTip = 'Manage rendered files';
 
       var refreshButton = controlsGroup1.add(
         'iconbutton',
@@ -162,6 +187,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           style: 'toolbutton',
         }
       );
+      refreshButton.helpTip = 'Refresh';
       refreshButton.onClick = function() {
         try {
           refreshButton_onClick();
@@ -185,6 +211,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           catchError(e);
         }
       };
+      settingsButton.helpTip = 'Settings';
       settingsButton.size = [elemSize, elemSize];
       settingsButton.alignment = 'right';
 
@@ -234,6 +261,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           name: 'versionsDropdown',
         }
       );
+      versionsDropdown.helpTip = 'Choose version number';
       versionsDropdown.size = [60, elemSize];
       versionsDropdown.enabled = false;
       versionsDropdown.onChange = function() {
@@ -254,6 +282,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           style: 'toolbutton',
         }
       );
+      versionsIncrement.helpTip = 'Increment version number';
       versionsIncrement.onClick = function() {
         try {
           versionsIncrement_onClick();
@@ -273,7 +302,14 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           style: 'toolbutton',
         }
       );
-      versionsReset.onClick = versionsReset_onClick;
+      versionsReset.helpTip = 'Reset version number';
+      versionsReset.onClick = function() {
+        try {
+          versionsReset_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
       versionsReset.size = [elemSize, elemSize];
       versionsReset.alignment = 'left';
       versionsReset.enabled = false;
@@ -287,7 +323,14 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         style: 'toolbutton',
         }
       );
-      importButton.onClick = importButton_onClick;
+      importButton.helpTip = 'Import output into project';
+      importButton.onClick = function() {
+        try {
+          importButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
       importButton.size = [elemSize, elemSize];
       importButton.alignment = 'left';
       importButton.enabled = false;
@@ -513,11 +556,13 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         item.enabled = false;
       }
     },
+
     disable: function() {
       button_copy.enabled = false;
       palette.update();
       palette.layout.layout();
     },
+
     setdropdown: function(inArr) {
       inArr = inArr.sort();
       if (inArr.length > 0) {
@@ -535,6 +580,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         }
       }
     },
+
     cleardropdown: function() {
       versionsDropdown.removeAll();
     },
@@ -557,79 +603,74 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         saved = false;
       };
 
-      if (listItem.selection && saved) {
-        var index = cls.prototype.getSelection();
-        var batname = (
-          app.project.file.displayName + '-' +
-          data.item(index).compname + '.bat'
-        );
-        bat = new File(settings.tempFolder.fullName + '/' + batname);
-
-        app.project.save();
-
-        var comparchive = new Folder(
-          getSetting('pathcontrol_fsName') + sep +
-          '.aeparchive' + sep +
-          data.item(index).compname + sep +
-          pathcontrol.getVersionString()
-        );
-
-        comparchive.create();
-
-        try {
-          app.project.file.copy(
-            comparchive.fsName + sep +
-            data.item(index).compname + '_' +
-            pathcontrol.getVersionString() + '_' +
-            app.project.file.displayName
-          );
-        } catch (e) {
-          Window.alert(e, SCRIPT_NAME);
-        };
-
-
-        omItem.file.parent.create();
-
-        if (promptForFile) {
-          bat.changePath(app.project.file.parent.fullName + '/' + batname);
-          bat = bat.openDlg();
-        }
-
-        if (bat) {
-          var variables = '::' + app.project.file.fsName + '\n' +
-            '::' + data.item(index).compname + '\n' +
-            'set aerenderPath=' + getSetting('aerender_bin') + '\n' +
-            'set project=' + app.project.file.fsName + '\n' +
-            'set rqindex=' + data.item(index).rqIndex + '\n' +
-            'set output=' + omItem.file.fsName + '\n' +
-            'set s=' + parseInt(data.item(index).startframe, 10) + '\n' +
-            'set e=' + parseInt(data.item(index).endframe, 10) + '\n';
-
-          var cmd = '"%aerenderPath%"' +
-            ' -project "%project%"' +
-            ' -rqindex %rqindex%' +
-            ' -output "%output%"' +
-            ' -s %s%' +
-            ' -e %e%' +
-            ' -sound ON -continueOnMissingFootage';
-
-          var start = (
-            'start \"' + 'Rendering ' +
-            data.item(index).compname + ' of ' +
-            app.project.file.displayName + '\" ' + cmd
-          );
-
-          bat.open('w');
-          bat.write(variables + '\n' + start);
-          bat.close();
-          bat.execute();
-        }
+      if (!(listItem.selection) && !(saved)) {
+        return;
       }
-      if (!saved) {
+
+      if (!(saved)) {
         Window.alert(
           'Project is not saved.\nYou must save it before continuing.',
           SCRIPT_NAME + ': Project is not yet saved.'
         );
+        return;
+      }
+
+      var index = cls.prototype.getSelection();
+      var batname = (
+        '[' + app.project.file.displayName + ']' +
+        '[' + data.item(index).compname + ']' +
+        '.bat'
+      );
+
+      bat = new File(settings.tempFolder.fullName + '/' + batname);
+
+      app.project.save();
+
+      var aeparchive = new Aeparchives(
+        getSetting('pathcontrol_fsName'),
+        data.item(index).compname,
+        pathcontrol.getVersionString()
+      );
+      aeparchive.createDir();
+      aeparchive.archive();
+
+
+      omItem.file.parent.create();
+
+      if (promptForFile) {
+        bat.changePath(getSetting('pathcontrol_fsName') + sep + batname);
+        // var rdir = new File();
+        bat = bat.openDlg('Save aerender batch file.', 'Batch:*.bat', false);
+      }
+
+      if (bat) {
+        var variables = '::' + app.project.file.fsName + '\n' +
+          '::' + data.item(index).compname + '\n' +
+          'set aerenderPath=' + getSetting('aerender_bin') + '\n' +
+          'set project=' + app.project.file.fsName + '\n' +
+          'set rqindex=' + data.item(index).rqIndex + '\n' +
+          'set output=' + omItem.file.fsName + '\n' +
+          'set s=' + parseInt(data.item(index).startframe, 10) + '\n' +
+          'set e=' + parseInt(data.item(index).endframe, 10) + '\n';
+
+        var cmd = '"%aerenderPath%"' +
+          ' -project "%project%"' +
+          ' -rqindex %rqindex%' +
+          ' -output "%output%"' +
+          ' -s %s%' +
+          ' -e %e%' +
+          ' -sound ON -continueOnMissingFootage';
+
+        var start = (
+          'start \"' + 'Rendering ' +
+          data.item(index).compname + ' of ' +
+          app.project.file.displayName + '\" ' + cmd
+        );
+
+        bat.open('w');
+        bat.write(variables + '\n' + start);
+        bat.close();
+        bat.execute();
       }
     },
 
@@ -689,8 +730,6 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
 
     var rvPath = getSetting('rv_bin');
     var rvCall = getSetting('rv_call');
-    var djvPath = getSetting('djv_bin');
-    var djvCall = getSetting('djv_call');
 
     var item = data.item(listItem.selection.index);
 
@@ -698,66 +737,41 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     var file = new File(settings.tempFolder.fullName + '/_playercall.bat');
     var cmd;
 
-    if (getSetting('player') === 'rv') {
-      if (getSetting('rv_bin') === null) {
-        Window.alert(
-          'RV is selected as the current player but no path has been set.\nCheck the preferences.',
-          SCRIPT_NAME
-        );
-        return;
-      }
+    if (getSetting('rv_bin') === null) {
+      Window.alert(
+        'RV is selected as the current player but no path has been set.\nCheck the preferences.',
+        SCRIPT_NAME
+      );
+      return;
+    }
 
-      if (item.exists.fsNames.length < 1) {
-        Window.alert(
-          'No frames have been rendered yet.',
-          SCRIPT_NAME
-        );
-        return;
-      }
+    if (item.exists.fsNames.length < 1) {
+      Window.alert(
+        'No frames have been rendered yet.',
+        SCRIPT_NAME
+      );
+      return;
+    }
 
-      if (pathcontrol.getPadding() > 0) {
-        var rvSequencePath = (
-          sequencePath.slice(0, -4).slice(0, -1 * (item.padding + 2)) +
-          '%%0' + item.padding + 'd' +
-          '.' + item.ext
-        );
+    if (pathcontrol.getPadding() > 0) {
+      var rvSequencePath = (
+        sequencePath.slice(0, -4).slice(0, -1 * (item.padding + 2)) +
+        '%%0' + item.padding + 'd' +
+        '.' + item.ext
+      );
 
-        var rvRange = item.startframe + '-' + item.endframe;
+      var rvRange = item.startframe + '-' + item.endframe;
 
-        cmd = (
-          '\"' + getSetting('rv_bin') + '\"' + ' ' +
-          '\"' + rvSequencePath + '\"' + ' ' +
-          rvRange + ' ' + rvCall
-        );
-      } else {
-        if (rvUsePush == 'false') {
-          cmd = (
-            '\"' + rvPath + '\"' + ' ' + '\"' +
-            sequencePath + '\"' + ' ' + rvCall
-          );
-        }
-      }
-    } else if (getSetting('player') === 'djv') {
-      if (item.exists.fsNames[0]) {
-        var djvSequencePath = item.exists.fsNames[0];
-
-        if (pathcontrol.getPadding() > 0) {
-          cmd = (
-            '\"' + djvPath + '\"' + ' ' + '\"' +
-            djvSequencePath + '\"' + ' -seq Range -playback_speed ' +
-            Math.round(1 / item.comp.frameDuration) + ' ' + djvCall
-          );
-        }
-
-        if (pathcontrol.getPadding() === 0) {
-          cmd = (
-            '\"' + djvPath + '\"' + ' ' + '\"' +
-            djvSequencePath + '\"' + ' ' + djvCall
-          );
-        }
-      } else {
-        cmd = null;
-      }
+      cmd = (
+        '\"' + getSetting('rv_bin') + '\"' + ' ' +
+        '\"' + rvSequencePath + '\"' + ' ' +
+        rvRange + ' ' + rvCall
+      );
+    } else {
+      cmd = (
+        '\"' + rvPath + '\"' + ' ' + '\"' +
+        sequencePath + '\"' + ' ' + rvCall
+      );
     }
 
     if (cmd) {
@@ -789,6 +803,103 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     var p = f.parent;
 
     reveal(p);
+  }
+
+  /**
+   * Reveal the selected render output in the explorer
+   */
+  function restoreButton_onClick() {
+    var omItem = data.getOutputModule(
+      data.item(listItem.selection.index).rqIndex,
+      data.item(listItem.selection.index).omIndex
+    );
+
+    var pathcontrol = new Pathcontrol();
+    pathcontrol.initFromOutputModule(omItem);
+
+    if (pathcontrol.getVersion() === null) {
+      Window.alert(
+        'Version Control has not been set for this output.',
+        SCRIPT_NAME
+      );
+      return;
+    }
+
+    var prompt = confirm(
+      'Do you want to restore the project used to render \'' + pathcontrol.getVersionString() + '\'?',
+      SCRIPT_NAME
+    );
+
+    if (!prompt) {
+      return;
+    }
+
+    var index = cls.prototype.getSelection();
+    if (index === null) {
+      return;
+    }
+
+    var aeparchive = new Aeparchives(
+      getSetting('pathcontrol_fsName'),
+      data.item(index).compname,
+      pathcontrol.getVersionString()
+    );
+
+    var archived = new File(aeparchive.getArchivePath());
+    if (!(archived.exists)) {
+      Window.alert(
+        'Could not find an archived project file for the current version.',
+        SCRIPT_NAME
+      );
+      return;
+    }
+
+    var saved;
+    try {
+      saved = app.project.file.exists;
+    } catch (e) {
+      saved = false;
+    };
+
+    if (!(saved)) {
+      Window.alert(
+        'Project is not saved.\nSave it before restoring an archived version.',
+        SCRIPT_NAME + ': Project is not yet saved.'
+      );
+      return;
+    };
+
+
+    var currentPath = app.project.file.parent.fsName;
+    var restoredName = archived.displayName.replace(/^(\[.*\]\s)/i, '');
+
+    var i = 1;
+    var newPath = currentPath + sep + restoredName + ' (restored-' + String(i) + ').aep';
+    var restored = new File(newPath);
+
+    while (restored.exists) {
+      i++;
+      newPath = currentPath + sep + restoredName + ' (restored-' + String(i) + ').aep';
+      restored.changePath(newPath);
+    }
+
+    var c = archived.copy(restored.absoluteURI);
+    if (!c) {
+      Window.alert('Error restoring project file.', SCRIPT_NAME);
+      return;
+    }
+
+
+    var prompt = confirm(
+      'Do you want to open the restored project?',
+      'Project restored.'
+    );
+
+    if (prompt) {
+      app.open(restored);
+    } else {
+      restored.parent.execute();
+    }
   }
 
   /**
@@ -984,13 +1095,18 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
    * still read-only. Come on Adobe...
    * @param {integer} rqIndex Render Queue item index (1-based).
    * @param {integer} omIndex Render Queue OutputModule index (1-based).
+   * @param {object} pathcontrol Pathcontrol instance.
    */
-  function setRenderQueueItemDefaults(rqIndex, omIndex) {
+  function setRenderQueueItemDefaults(rqIndex, omIndex, pathcontrol) {
     var rqItem = app.project.renderQueue.item(rqIndex);
     var omItem = data.getOutputModule(rqIndex, omIndex);
 
     rqItem.setSetting('Time Span', 0); // 'Length of the comp'
-    rqItem.setSetting('Skip Existing Files', true);
+    if (pathcontrol.getPadding() === 0) {
+      rqItem.setSetting('Skip Existing Files', false);
+    } else {
+      rqItem.setSetting('Skip Existing Files', true);
+    }
     rqItem.setSetting('Quality', 2); // 'best'
     rqItem.setSetting('Resolution', '1,1'); // 'full' {'x': 1, 'y': 1}
 
@@ -998,6 +1114,8 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     omItem.setSetting('Use Comp Frame Number', false);
     omItem.setSetting('Starting #', 1);
     omItem.setSetting('Resize', false);
+
+    // TODO: get Adobe to make these variables scriptable.
     // omItem.setSetting('Format', 7); // 'PNG' - READ ONLY PROPERTY
     // omItem.setSetting('Channels', 1); // 'RGBA' - READ ONLY PROPERTY
     // omItem.setSetting('Depth', 32); // 'Millions+' - READ ONLY PROPERTY
@@ -1028,7 +1146,8 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     if (sel.text === 'Set Version Control') {
       setRenderQueueItemDefaults(
         data.item(listItem.selection.index).rqIndex,
-        data.item(listItem.selection.index).omIndex
+        data.item(listItem.selection.index).omIndex,
+        pathcontrol
       );
 
       pathcontrol.setVersion(1);
@@ -1068,25 +1187,25 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       pathcontrol.apply(
         data.item(listItem.selection.index)
       );
-
-      data.setData();
-      var cs = cls.prototype.getSelection();
-
-      cls.prototype.clear();
-      cls.prototype.setlist(
-        data.compnames(),
-        data.filenames(),
-        data.rendered().frames,
-        data.missing().frames,
-        data.incomplete().frames,
-        data.rendered().sizes
-      );
-
-      settings.setbasepath();
-
-      // cls.prototype.show();
-      cls.prototype.setSelection(cs);
     }
+
+    data.setData();
+    var cs = cls.prototype.getSelection();
+
+    cls.prototype.clear();
+    cls.prototype.setlist(
+      data.compnames(),
+      data.filenames(),
+      data.rendered().frames,
+      data.missing().frames,
+      data.incomplete().frames,
+      data.rendered().sizes
+    );
+
+    settings.setbasepath();
+
+    // cls.prototype.show();
+    cls.prototype.setSelection(cs);
   }
 
   /**
@@ -1099,6 +1218,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       batchButton.enabled = true;
       importButton.enabled = true;
       browseButton.enabled = true;
+      restoreButton.enabled = true;
       framesButton.enabled = true;
       versionsIncrement.enabled = true;
       versionsReset.enabled = true;
@@ -1149,6 +1269,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       batchButton.enabled = false;
       importButton.enabled = false;
       browseButton.enabled = false;
+      restoreButton.enabled = false;
       framesButton.enabled = false;
       versionsIncrement.enabled = false;
       versionsReset.enabled = false;

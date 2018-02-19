@@ -261,6 +261,7 @@ var Data = function() {
       frame = 1;
       name = decodeURI(omName);
       index = names.indexOf(name);
+      file = files.item(index);
       fsName = omParentFsName + sep + name;
 
       if (index >= 0) {

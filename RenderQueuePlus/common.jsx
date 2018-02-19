@@ -447,3 +447,16 @@ function reveal(p) {
     reveal(p.parent);
   }
 };
+
+/**
+ * Opens the given website in a browser.
+ * @param  {string} url the url to visit
+ */
+function openLink(url) {
+   var linkJumper = new File(Folder.temp.absoluteURI + '/rqplus_link.html');
+   linkJumper.open('w');
+   var linkBody = '<html><head><META HTTP-EQUIV=Refresh CONTENT="0; URL=' + url + '"></head><body><p></body></html>';
+   linkJumper.write(linkBody);
+   linkJumper.close();
+   linkJumper.execute();
+}
