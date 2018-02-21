@@ -13,6 +13,7 @@
     "no-var": "off",
     "no-extend-native": "off",
     "no-unused-vars": "warn",
+    "guard-for-in": "warn",
     "max-len": "warn",
     "no-extend-native": "warn"
   }
