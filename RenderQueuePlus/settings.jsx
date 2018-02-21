@@ -843,6 +843,8 @@ var Settings = function(thisObj) {
     this.scriptname = function() {
       return settings.scriptname;
     }();
+
+    this.setbasepath();
   };
   return cls;
 }(this);

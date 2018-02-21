@@ -72,8 +72,7 @@ var Aeparchives = function() {
     this.getProjectName = function() {
       try {
         var s ='[' + cls.compname + ']' +
-        '[' + cls.version + ']' + ' ' +
-        app.project.file.displayName;
+        '[' + cls.version + ']';
         return s;
       } catch (e) {
         catchError(e);

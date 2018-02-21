@@ -3,21 +3,17 @@
  * @return {[type]} [description]
  */
 var Data = function() {
-  var DATA;
+  var DATA = {};
 
   /**
-   * Private convenience function that populates the dataObj.
-   * @param {object} dataObj The dataObject to populate.
-   * @param {outputModule} rqItem  outputModule.
-   * @param {renderQueueItem} omItem  renderQueueItem.
-   * @return {object} dataObj  populated dataObject.
+   * Private convenience function that populates a dataObj.
+   * @param {object} dataObj The dataObject to populate
+   * @param {outputModule} rqItem  outputModule
+   * @param {renderQueueItem} omItem  renderQueueItem
+   * @return {object} populated dataObj
    */
   function setData(dataObj, rqItem, omItem) {
-     var omFile = omItem.file;
-     var omName = omFile.name;
-     var omParentFsName = omFile.parent.fsName;
-
-    if (!(dataObj.ready && omFile)) {
+    if (!(dataObj.ready && omItem.file)) {
       dataObj.sequencename = 'File not yet specified.';
       dataObj.filename = 'File not yet specified.';
       dataObj.ext = null;
@@ -66,6 +62,7 @@ var Data = function() {
     }
 
     var oneframe = rqItem.comp.frameDuration;
+
     dataObj.startframe = Math.round(
       (rqItem.timeSpanStart / oneframe) +
       (rqItem.comp.displayStartTime / oneframe)
@@ -78,17 +75,17 @@ var Data = function() {
       dataObj.endframe - dataObj.startframe
     );
 
-    dataObj.padding = getPadding(omName);
-    dataObj.ext = omName.slice(-3);
+    dataObj.padding = getPadding(omItem.file.name);
+    dataObj.ext = omItem.file.name.slice(-3);
     if (!dataObj.padding) {
       dataObj.sequencename = (
-        decodeURI(decodeURI(omName)) + ' ' + '[' +
+        decodeURI(decodeURI(omItem.file.name)) + ' ' + '[' +
         pad(dataObj.startframe, dataObj.padding) + '-' +
         pad(dataObj.endframe, dataObj.padding) + ']'
       );
     } else {
       dataObj.sequencename = (
-        decodeURI(decodeURI(omName).slice(
+        decodeURI(decodeURI(omItem.file.name).slice(
           0, ((dataObj.padding + 2 + 4) * (-1)))) +
         '[' + pad(dataObj.startframe, dataObj.padding) + '-' +
         pad(dataObj.endframe, dataObj.padding) + ']' + '.' + dataObj.ext
@@ -96,21 +93,25 @@ var Data = function() {
     };
 
     dataObj.filename = (
-      decodeURI(omFile.parent.name) +
+      decodeURI(omItem.file.parent.name) +
       sep +
       decodeURI(dataObj.sequencename)
     );
 
-    var stat = new Directory(omFile.parent);
+    var dir = new Directory(omItem.file.parent);
     var files;
 
     if (dataObj.padding > 0) {
-      files = stat.files('*.' + dataObj.ext);
+      files = dir.getFiles('*.' + dataObj.ext);
     } else {
-      files = stat.files(omFile.displayName);
+      files = dir.getFiles(omItem.file.displayName);
     }
 
-    if (files.item(0).name == ('Invalid path.' || 'Error.')) {
+    // Error
+    if (
+      files.hasOwnProperty('Invalid path.') ||
+      files.hasOwnProperty('Error.')
+    ) {
       dataObj.exists = {
         frames: '-',
         names: [],
@@ -152,79 +153,98 @@ var Data = function() {
       };
 
       return dataObj;
-    }
+    } // error
 
     var frame;
-    var name;
-    var names = files.names;
+    var name = (
+      decodeURI(omItem.file.name).slice(0, (dataObj.padding + 2 + 4) * (-1))
+    );
+    var fname = '';
     var fsName;
-    var index;
-    var file;
+
     var notmissingNames = [];
     var notmissingFrames = [];
     var notmissingfsNames = [];
     var notmissingSizes = [];
     var notmissingDates = [];
+
     var existsNames = [];
     var existsFrames = [];
     var existsfsNames = [];
     var existsSizes = [];
     var existsDates = [];
+
     var missingNames = [];
     var missingFrames = [];
     var missingfsNames = [];
+
     var partialNames = [];
     var partialFrames = [];
     var partialfsNames = [];
     var partialSizes = [];
     var partialDates = [];
+
     var size = 0;
+    var formattedSize = 0;
 
+    // Image sequence
     if (dataObj.padding > 0) {
-      var sframe = parseInt(dataObj.startframe, 10);
-      var dframe = parseInt(dataObj.duration, 10);
+      var progressbar = new PBar(dataObj.duration + dataObj.startframe);
+      var n = 100;
+      progressbar.show();
 
-      for (var i = sframe; i <= dframe + sframe; i++) {
+      for (
+        var i = dataObj.startframe;
+        i <= dataObj.duration + dataObj.startframe;
+        i++
+      ) {
+        // Progress bar
+        if (i % n === (n - 1)) {
+          progressbar.hit(i);
+          progressbar.update();
+        }
+
         frame = pad(i, dataObj.padding);
-        name = (
-          decodeURI(omName).slice(0, (dataObj.padding + 2 + 4) * (-1)) +
-          frame + '.' + dataObj.ext
-        );
-        index = names.indexOf(name);
-        file = files.item(index);
-        fsName = omParentFsName + sep + name;
-        if (index >= 0) {
-          notmissingNames.push(name);
-          notmissingFrames.push(parseInt(frame, 10));
-          notmissingfsNames.push(fsName);
-          notmissingSizes.push(formatBytes(file.size, 2));
-          notmissingDates.push(file.date + ' ' + file.time);
+        fname = name + frame + '.' + dataObj.ext;
+        fsName = omItem.file.parent.fsName + sep + fname;
 
-          if (files.sizes[index] > 50) {
-            existsNames.push(name);
-            existsFrames.push(parseInt(frame, 10));
+        if (files.hasOwnProperty(fname)) {
+          notmissingNames.push(fname);
+          notmissingFrames.push(i);
+          notmissingfsNames.push(fsName);
+          notmissingSizes.push(formatBytes(files[fname].size, 2));
+          notmissingDates.push(files[fname].date + ' ' + files[fname].time);
+
+          if (files[fname].size > 50) {
+            existsNames.push(fname);
+            existsFrames.push(i);
             existsfsNames.push(fsName);
-            existsSizes.push(formatBytes(file.size, 2));
-            existsDates.push(file.date + ' ' + file.time);
-            size += file.size;
+            existsSizes.push(formatBytes(files[fname].size, 2));
+            existsDates.push(files[fname].date + ' ' + files[fname].time);
+            size += files[fname].size;
           } else {
-            partialNames.push(name);
-            partialFrames.push(parseInt(frame, 10));
+            partialNames.push(fname);
+            partialFrames.push(i);
             partialfsNames.push(fsName);
-            partialSizes.push(formatBytes(file.size, 2));
-            partialDates.push(file.date + ' ' + file.time);
+            partialSizes.push(formatBytes(files[fname].size, 2));
+            partialDates.push(files[fname].date + ' ' + files[fname].time);
           }
-        } else if (index == -1) {
-          missingNames.push(name);
-          missingFrames.push(parseInt(frame, 10));
+        } else {
+          missingNames.push(fname);
+          missingFrames.push(i);
           missingfsNames.push(fsName);
         }
-      } // end of loop
+      }; // end of loop
+
+      progressbar.palette().size = [1, 1];
+      progressbar.close();
+      formattedSize = formatBytes(size, 2);
+
       dataObj.exists = {
         frames: getRanges(notmissingFrames),
         names: notmissingNames,
         fsNames: notmissingfsNames,
-        size: formatBytes(size, 2),
+        size: formattedSize,
         sizes: notmissingSizes,
         dates: notmissingDates,
         count: notmissingFrames.length,
@@ -233,7 +253,7 @@ var Data = function() {
         frames: getRanges(existsFrames),
         names: existsNames,
         fsNames: existsfsNames,
-        size: formatBytes(size, 2),
+        size: formattedSize,
         sizes: existsSizes,
         dates: existsDates,
         count: existsNames.length,
@@ -243,7 +263,7 @@ var Data = function() {
         frames: getRanges(missingFrames),
         names: missingNames,
         fsNames: missingfsNames,
-        size: 0,
+        size: formatBytes(0, 2),
         sizes: [],
         dates: [],
         count: missingNames.length,
@@ -252,51 +272,50 @@ var Data = function() {
         frames: getRanges(partialFrames),
         names: partialNames,
         fsName: partialfsNames,
-        size: 0,
+        size: formatBytes(0, 2),
         sizes: partialSizes,
         dates: partialDates,
         count: partialNames.length,
       };
+    // Movies
     } else {
       frame = 1;
-      name = decodeURI(omName);
-      index = names.indexOf(name);
-      file = files.item(index);
-      fsName = omParentFsName + sep + name;
+      fname = decodeURI(omItem.file.name);
+      fsName = omItem.file.parent.fsName + sep + name;
 
-      if (index >= 0) {
+      if (files.hasOwnProperty(fname)) {
         notmissingNames.push(name);
-        notmissingFrames.push(parseInt(frame, 10));
+        notmissingFrames.push(frame);
         notmissingfsNames.push(fsName);
-        notmissingSizes.push(formatBytes(file.size, 2));
-        notmissingDates.push(file.date + ' ' + file.time);
-        if (files.sizes[index] > 50) {
-          existsNames.push(name);
-          existsFrames.push(parseInt(frame, 10));
-          existsfsNames.push(fsName);
-          existsSizes.push(formatBytes(file.size, 2));
-          existsDates.push(file.date + ' ' + file.time);
-          size += file.size;
-        } else {
-          partialNames.push(name);
-          partialFrames.push(parseInt(frame, 10));
-          partialfsNames.push(fsName);
-          partialSizes.push(formatBytes(file.size, 2));
-          partialDates.push(file.date + ' ' + file.time);
-        }
-      }
+        notmissingSizes.push(formatBytes(files[fname].size, 2));
+        notmissingDates.push(files[fname].date + ' ' + files[fname].time);
 
-      if (index == -1) {
-        missingNames.push(name);
-        missingFrames.push(parseInt(frame, 10));
+        if (files[fname].size > 50) {
+          existsNames.push(fname);
+          existsFrames.push(frame);
+          existsfsNames.push(fsName);
+          existsSizes.push(formatBytes(files[fname].size, 2));
+          existsDates.push(files[fname].date + ' ' + files[fname].time);
+          size += files[fname].size;
+        } else {
+          partialNames.push(fname);
+          partialFrames.push(frame);
+          partialfsNames.push(fsName);
+          partialSizes.push(formatBytes(files[fname].size, 2));
+          partialDates.push(files[fname].date + ' ' + files[fname].time);
+        }
+      } else {
+        missingNames.push(fname);
+        missingFrames.push(frame);
         missingfsNames.push(fsName);
       }
 
+      formattedSize = formatBytes(size, 2);
       dataObj.exists = {
         frames: 1,
         names: [files.items[0].name],
         fsNames: notmissingfsNames,
-        size: formatBytes(size, 2),
+        size: formattedSize,
         sizes: notmissingSizes,
         dates: notmissingDates,
         count: notmissingFrames.length,
@@ -306,7 +325,7 @@ var Data = function() {
         frames: getRanges(existsFrames),
         names: existsNames,
         fsNames: existsfsNames,
-        size: formatBytes(size, 2),
+        size: formattedSize,
         sizes: existsSizes,
         dates: existsDates,
         count: existsNames.length,
@@ -316,7 +335,7 @@ var Data = function() {
         frames: getRanges(missingFrames),
         names: missingNames,
         fsNames: missingfsNames,
-        size: 0,
+        size: formatBytes(0, 2),
         sizes: [],
         dates: [],
         count: missingNames.length,
@@ -326,7 +345,7 @@ var Data = function() {
         frames: getRanges(partialFrames),
         names: partialNames,
         fsName: partialfsNames,
-        size: 0,
+        size: formatBytes(0, 2),
         sizes: partialSizes,
         dates: partialDates,
         count: partialNames.length,
@@ -336,6 +355,7 @@ var Data = function() {
   }
 
   var cls = function() {
+    var cls = this;
     this.getOutputModule = function(rqIndex, omIndex) {
       var rqItem;
       var omItem;
@@ -359,108 +379,125 @@ var Data = function() {
       }
     };
 
-    this.setData = function() {
-      var dataObj = {};
+    this.setData = function(idx) {
+      /**
+      * Private convenience function
+      * @param {number} i rqIndex
+      * @param {number} j omIndex
+      * @return {object} dataObj
+      */
+      function setDataObj(i, j) {
+        var rqItem = app.project.renderQueue.item(i);
+        var omItem = rqItem.outputModule(j);
 
-      var rqItem;
-      var omItem;
+        dataObj = {};
+        dataObj.projectName = app.project.name;
 
-      dataObj.projectName = app.project.name;
+        if (!(omItem.file)) {
+          var fsName = getSetting('pathcontrol_fsName');
+          omItem.file = new File(fsName + '/tempOutput');
+        }
 
-      DATA = [];
+        dataObj.ready = function() {
+          if (rqItem.status == RQItemStatus.QUEUED) {
+            return true;
+          } else if (rqItem.status == RQItemStatus.NEEDS_OUTPUT) {
+            return true;
+          } else if (rqItem.status == RQItemStatus.UNQUEUED) {
+            return false;
+          } else if (rqItem.status == RQItemStatus.DONE) {
+            return false;
+          };
+        }();
 
-      for (var i = 1; i <= app.project.renderQueue.numItems; i++) {
-        rqItem = app.project.renderQueue.item(i);
+        dataObj.rqIndex = i;
+        dataObj.omIndex = j;
+        dataObj.comp = rqItem.comp;
+        dataObj.compname = fileNameSafeString(dataObj.comp.name);
 
-        for (var j = 1; j <= rqItem.numOutputModules; j++) {
-          omItem = rqItem.outputModule(j);
-          dataObj = {};
-
-          if (!(omItem.file)) {
-            var fsName = getSetting('pathcontrol_fsName');
-            omItem.file = new File(fsName + '/tempOutput');
-          }
-
-          dataObj.ready = function() {
-            if (rqItem.status == RQItemStatus.QUEUED) {
-              return true;
-            } else if (rqItem.status == RQItemStatus.NEEDS_OUTPUT) {
-              return true;
-            } else if (rqItem.status == RQItemStatus.UNQUEUED) {
-              return true;
-            } else if (rqItem.status == RQItemStatus.DONE) {
-              return false;
-            };
-          }();
-
-          dataObj.rqIndex = i;
-          dataObj.omIndex = j;
-          dataObj.comp = rqItem.comp;
-          dataObj.compname = fileNameSafeString(dataObj.comp.name);
-
-          dataObj.file = function() {
-            if (dataObj.ready) {
-              if (omItem.file) {
-                return omItem.file;
-              } else {
-                return null;
-              };
+        dataObj.file = function() {
+          if (dataObj.ready) {
+            if (omItem.file) {
+              return omItem.file;
             } else {
               return null;
             };
-          }();
-
-          dataObj.filename = null;
-
-          dataObj.sequencename = null;
-          dataObj.ext = null;
-          dataObj.padding = null;
-          dataObj.startframe = null;
-          dataObj.endframe = null;
-          dataObj.duration = null;
-
-          dataObj.exists = {
-            frames: null,
-            names: null,
-            fsNames: null,
-            size: null,
-            sizes: null,
-            dates: null,
-            count: null,
+          } else {
+            return null;
           };
+        }();
 
-          dataObj.rendered = {
-            frames: null,
-            names: null,
-            fsNames: null,
-            size: null,
-            sizes: null,
-            dates: null,
-            count: null,
-          };
+        dataObj.filename = null;
 
-          dataObj.missing = {
-            frames: null,
-            names: null,
-            fsNames: null,
-            size: null,
-            sizes: null,
-            dates: null,
-            count: null,
-          };
+        dataObj.sequencename = null;
+        dataObj.ext = null;
+        dataObj.padding = null;
+        dataObj.startframe = null;
+        dataObj.endframe = null;
+        dataObj.duration = null;
 
-          dataObj.incomplete = {
-            frames: null,
-            names: null,
-            fsName: null,
-            size: null,
-            sizes: null,
-            dates: null,
-            count: null,
-          };
+        dataObj.exists = {
+          frames: null,
+          names: null,
+          fsNames: null,
+          size: null,
+          sizes: null,
+          dates: null,
+          count: null,
+        };
 
-          dataObj = setData(dataObj, rqItem, omItem);
-          DATA.push(dataObj);
+        dataObj.rendered = {
+          frames: null,
+          names: null,
+          fsNames: null,
+          size: null,
+          sizes: null,
+          dates: null,
+          count: null,
+        };
+
+        dataObj.missing = {
+          frames: null,
+          names: null,
+          fsNames: null,
+          size: null,
+          sizes: null,
+          dates: null,
+          count: null,
+        };
+
+        dataObj.incomplete = {
+          frames: null,
+          names: null,
+          fsName: null,
+          size: null,
+          sizes: null,
+          dates: null,
+          count: null,
+        };
+
+        return setData(dataObj, rqItem, omItem);
+      }
+
+      var dataObj = {};
+      var i = 1;
+      var j = 1;
+
+      if (typeof idx !== 'undefined') {
+        if (!(idx === null)) {
+          i = DATA[idx].rqIndex;
+          j = DATA[idx].omIndex;
+          DATA[idx] = setDataObj(i, j);
+          return;
+        }
+      }
+
+      DATA = {};
+      var k = 0;
+      for (i = 1; i <= app.project.renderQueue.numItems; i++) {
+        for (j = 1; j <= app.project.renderQueue.item(i).numOutputModules; j++) {
+          DATA[k] = setDataObj(i, j);
+          ++k;
         }
       }
     };
@@ -471,11 +508,16 @@ var Data = function() {
 
     this.compnames = function() {
       var arr = [];
-      if (DATA.length === 0) {
-        arr = ['No active output modules found.'];
-        return arr;
+      var keys = [];
+
+      for (var key in DATA) {
+        keys.push(key);
+      };
+
+      if (isObjectEmpty(DATA)) {
+        return ['No active output modules found.'];
       } else {
-        for (var i = 0; i < DATA.length; i++) {
+        for (var i = 0; i < keys.length; i++) {
           arr.push(DATA[i].compname);
         }
         return arr;
@@ -484,15 +526,20 @@ var Data = function() {
 
     this.filenames = function() {
       var arr = [];
-      if (DATA.length === 0) {
-        arr = ['No active output modules found'];
-        return arr;
+      var keys = [];
+
+      for (var key in DATA) {
+        keys.push(key);
+      };
+
+      if (isObjectEmpty(DATA)) {
+        return ['No active output modules found.'];
       } else {
-        for (var i = 0; i < DATA.length; i++) {
+        for (var i = 0; i < keys.length; i++) {
           if (DATA[i].file) {
             arr.push(DATA[i].filename);
           } else {
-            arr.push('Unqueued');
+            arr.push('Not queued');
           }
         }
         return arr;
@@ -500,6 +547,11 @@ var Data = function() {
     };
 
     this.rendered = function() {
+      var keys = [];
+      for (var key in DATA) {
+        keys.push(key);
+      };
+
       var returnObj = {
         frames: [],
         names: [],
@@ -508,10 +560,10 @@ var Data = function() {
         counts: [],
       };
 
-      if (DATA.length === 0) {
+      if (isObjectEmpty(DATA)) {
         return returnObj;
       } else {
-        for (var i = 0; i < DATA.length; i++) {
+        for (var i = 0; i < keys.length; i++) {
           returnObj.frames.push(DATA[i].rendered.frames);
           returnObj.names.push(DATA[i].rendered.names);
           returnObj.fsNames.push(DATA[i].rendered.fsNames);
@@ -523,6 +575,11 @@ var Data = function() {
     };
 
     this.missing = function() {
+      var keys = [];
+      for (var key in DATA) {
+        keys.push(key);
+      };
+
       var returnObj = {
         frames: [],
         names: [],
@@ -530,30 +587,25 @@ var Data = function() {
         counts: [],
       };
 
-      var frames = [];
-      var names = [];
-      var fsNames = [];
-      var counts = [];
-
-      if (DATA.length === 0) {
+      if (isObjectEmpty(DATA)) {
         return returnObj;
       } else {
-        for (var i = 0; i < DATA.length; i++) {
-          frames.push(DATA[i].missing.frames);
-          names.push(DATA[i].missing.names);
-          fsNames.push(DATA[i].missing.fsNames);
-          counts.push(DATA[i].missing.count);
+        for (var i = 0; i < keys.length; i++) {
+          returnObj.frames.push(DATA[i].missing.frames);
+          returnObj.names.push(DATA[i].missing.names);
+          returnObj.fsNames.push(DATA[i].missing.fsNames);
+          returnObj.counts.push(DATA[i].missing.count);
         }
-        returnObj.frames = frames;
-        returnObj.names = names;
-        returnObj.fsNames = fsNames;
-        returnObj.counts = counts;
-
         return returnObj;
       }
     };
 
     this.incomplete = function() {
+      var keys = [];
+      for (var key in DATA) {
+        keys.push(key);
+      };
+
       var returnObj = {
         frames: [],
         names: [],
@@ -561,30 +613,25 @@ var Data = function() {
         counts: [],
       };
 
-      var frames = [];
-      var names = [];
-      var fsNames = [];
-      var counts = [];
-
-      if (DATA.length === 0) {
+    if (isObjectEmpty(DATA)) {
         return returnObj;
       } else {
-        for (var i = 0; i < DATA.length; i++) {
-          frames.push(DATA[i].incomplete.frames);
-          names.push(DATA[i].incomplete.names);
-          fsNames.push(DATA[i].incomplete.fsNames);
-          counts.push(DATA[i].incomplete.count);
+        for (var i = 0; i < keys.length; i++) {
+          returnObj.frames.push(DATA[i].incomplete.frames);
+          returnObj.names.push(DATA[i].incomplete.names);
+          returnObj.fsNames.push(DATA[i].incomplete.fsNames);
+          returnObj.counts.push(DATA[i].incomplete.count);
         }
-        returnObj.frames = frames;
-        returnObj.names = names;
-        returnObj.fsNames = fsNames;
-        returnObj.counts = counts;
-
         return returnObj;
       }
     };
 
     this.exists = function() {
+      var keys = [];
+      for (var key in DATA) {
+        keys.push(key);
+      };
+
       var returnObj = {
         frames: [],
         names: [],
@@ -592,28 +639,19 @@ var Data = function() {
         counts: [],
       };
 
-      var frames = [];
-      var names = [];
-      var fsNames = [];
-      var counts = [];
-
-      if (DATA.length === 0) {
+      if (isObjectEmpty(DATA)) {
         return returnObj;
       } else {
-        for (var i = 0; i < DATA.length; i++) {
-          frames.push(DATA[i].exists.frames);
-          names.push(DATA[i].exists.names);
-          fsNames.push(DATA[i].exists.fsNames);
-          counts.push(DATA[i].exists.count);
+        for (var i = 0; i < keys.length; i++) {
+          returnObj.frames.push(DATA[i].exists.frames);
+          returnObj.names.push(DATA[i].exists.names);
+          returnObj.fsNames.push(DATA[i].exists.fsNames);
+          returnObj.counts.push(DATA[i].exists.count);
         }
-        returnObj.frames = frames;
-        returnObj.names = names;
-        returnObj.fsNames = fsNames;
-        returnObj.counts = counts;
-
         return returnObj;
       }
     };
+    this.setData();
   };
   return cls;
 }();

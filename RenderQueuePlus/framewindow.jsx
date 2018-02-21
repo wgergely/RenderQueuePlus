@@ -88,7 +88,7 @@ var FrameWindow = function() {
     ];
 
     var w = new Window('dialog', inTitle, undefined, {
-      resizeable: false,
+      resizeable: true,
     });
     w.alignChildren = 'center';
     w.margins = 18;
@@ -108,57 +108,49 @@ var FrameWindow = function() {
      */
     function deleteButton_onClick() {
       var listItem = w.findElement('listItem');
+      var cs = mainWindow.getSelection();
 
-      if (listItem.selection) {
-        var selected = listItem.selection;
-        var file = new File('/c/temp01234.tmp');
-        var result = false;
-
-        var text = 'Are you sure you want to delete the selected files?';
-        text += '\n\nThis cannot be undone.';
-        var choice = confirm(
-          text,
-          true,
-          'Confirm Delete'
-        );
-
-        if (!(choice)) {
-          return;
-        }
-
-        for (var i = 0; i < selected.length; i++) {
-          var existingFiles = data.item(index).exists;
-          var idx = existingFiles.names.indexOf(selected[i].text);
-
-          while (!file.changePath(existingFiles.fsNames[idx])) {
-            selected[i].text = 'Updating...';
-          };
-
-          if (!(file.exists)) {
-            continue;
-          }
-
-          result = file.remove();
-
-          if (result) {
-            selected[i].enabled = false;
-            selected[i].text = 'Deleted.';
-          } else {
-            var text = 'Sorry, there was an error deleteing the file.';
-            text += '\nUnkown error.';
-            Window.alert(
-              text,
-              SCRIPT_NAME
-            );
-          }
-        }
-        data.setData();
-      } else {
-        Window.alert(
-          'Select an item from the list below before continuing.',
-          SCRIPT_NAME
-        );
+      if (!(listItem.selection)) {
+        return;
       }
+
+      var text = 'Are you sure you want to delete the selected files?';
+      text += '\n\nThis cannot be undone.';
+      var choice = confirm(
+        text,
+        true,
+        'Confirm Delete'
+      );
+
+      if (!(choice)) {
+        return;
+      }
+
+      var file = new File('/c/temp01234.tmp');
+      var result;
+      var sel = listItem.selection;
+
+      for (var i = 0; i < sel.length; i++) {
+        var existingFiles = data.item(index).exists;
+
+        var idx = existingFiles.names.indexOf(sel[i].text);
+        file.changePath(existingFiles.fsNames[idx]);
+
+        if (!(file.exists)) {
+          continue;
+        }
+
+        result = file.remove();
+
+        if (result) {
+          sel[i].enabled = false;
+          sel[i].text = 'Deleted.';
+        } else {
+          var text = 'Sorry, there was an error deleting the file.';
+          sel[i].text = text;
+        }
+      }
+      data.setData(cs);
     };
 
     /**
@@ -172,11 +164,11 @@ var FrameWindow = function() {
      * Refreshes the data
      */
     function refreshButton_onClick() {
-      data.setData();
+      var cs = mainWindow.getSelection();
+      data.setData(cs);
 
       searchField.onChanging();
 
-      var cs = mainWindow.getSelection();
       mainWindow.clear();
       mainWindow.setlist(
         data.compnames(),
@@ -656,7 +648,7 @@ var FrameWindow = function() {
     button_cancel.margins = 0;
     button_cancel.spacing = 0;
 
-    searchGroup.size = [initX, 20];
+    // searchGroup.size = [initX, 20];
     searchInfoField.size = [initX * 0.333, 20];
     searchField.size = [initX * 0.666, 20];
 
@@ -674,24 +666,24 @@ var FrameWindow = function() {
     w.layout.layout(true);
     w.layout.resize();
 
-    w.onResizing = w.onResize = function() {
-      searchGroup.size = [w.size.width, 20];
-      searchInfoField.size = [w.size.width * 0.333, 20];
-      searchField.size = [w.size.width * 0.666, 20];
-
-      infoGroup1.size = [w.size.width, 20];
-      infoGroup2.size = [w.size.width, 20];
-      infoGroup3.size = [w.size.width, 20];
-      infoGroup4.size = [w.size.width, 20];
-      infoField1.size = [w.size.width, 20];
-      infoField2.size = [w.size.width, 20];
-      infoField3.size = [w.size.width, 20];
-      infoField4.size = [w.size.width, 20];
-
-      listGroup.size = [w.size.width, 500];
-      listItem.size = [w.size.width, 500];
-      w.layout.resize();
-    };
+    // w.onResizing = w.onResize = function() {
+    //   // searchGroup.size = [w.size.width, 20];
+    //   searchInfoField.size = [w.size.width * 0.333, 20];
+    //   searchField.size = [w.size.width * 0.666, 20];
+    //
+    //   infoGroup1.size = [w.size.width, 20];
+    //   infoGroup2.size = [w.size.width, 20];
+    //   infoGroup3.size = [w.size.width, 20];
+    //   infoGroup4.size = [w.size.width, 20];
+    //   infoField1.size = [w.size.width, 20];
+    //   infoField2.size = [w.size.width, 20];
+    //   infoField3.size = [w.size.width, 20];
+    //   infoField4.size = [w.size.width, 20];
+    //
+    //   listGroup.size = [w.size.width, 500];
+    //   listItem.size = [w.size.width, 500];
+    //   w.layout.resize();
+    // };
 
     return w;
   }

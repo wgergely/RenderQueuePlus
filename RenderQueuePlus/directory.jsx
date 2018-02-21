@@ -1,16 +1,9 @@
 /**
  * Wrapper module for window's dir command.
  */
-var Directory = (function(inPath) {
-  var nextId = 1;
-
+var Directory = function(inPath) {
   var cls = function(inPath) {
-    var id = nextId++;
     var pathFile = new File(inPath);
-
-    this.getID = function() {
-      return id;
-    };
 
     this.changePath = function(inPath) {
       pathFile.changePath(inPath);
@@ -24,7 +17,7 @@ var Directory = (function(inPath) {
       return this.callSystem(pathFile.fsName, args);
     };
 
-    this.files = function(mask) {
+    this.getFiles = function(mask) {
       var args;
       if (File.fs === 'Windows') {
         args = '/o:n /a:-d-h';
@@ -36,7 +29,7 @@ var Directory = (function(inPath) {
       }
     };
 
-    this.folders = function() {
+    this.getFolders = function() {
       var args;
       if (File.fs === 'Windows') {
         args = '/o:n /a:d-h';
@@ -44,7 +37,7 @@ var Directory = (function(inPath) {
       return this.callSystem(pathFile.fsName, args);
     };
 
-    this.hiddenFiles = function() {
+    this.getHiddenFiles = function() {
       if (File.fs === 'Windows') {
         args = '/o:n /a:h-d';
       }
@@ -52,19 +45,15 @@ var Directory = (function(inPath) {
       return this.callSystem(pathFile.fsName, args);
     };
 
-    this.hiddenFolders = function() {
+    this.getHiddenFolders = function() {
       var args = '/o:n /a:hd';
       return this.callSystem(pathFile.fsName, args);
     };
 
-    this.hidden = function() {
+    this.getHidden = function() {
       var args = '/o:n /a:h';
       return this.callSystem(pathFile.fsName, args);
     };
-  };
-
-  cls.get_nextId = function() {
-    return nextId;
   };
 
   cls.prototype = {
@@ -72,47 +61,8 @@ var Directory = (function(inPath) {
       var re = /(?:\.([^.]+))?$/;
       var extension = re.exec(inPath)[1];
 
-      var returnObject = function(inArr) {
-        var returnObj = {};
-        returnObj.items = inArr;
-        returnObj.item = function(index) {
-          return inArr[index];
-        };
-        returnObj.count = inArr.length;
-        returnObj.names = (function() {
-          var returnArr = [];
-          for (var i = 0; i < inArr.length; i++) {
-            returnArr.push(inArr[i].name);
-          }
-          return returnArr;
-        })();
-        returnObj.dates = (function() {
-          var returnArr = [];
-          for (var i = 0; i < inArr.length; i++) {
-            returnArr.push(inArr[i].date);
-          }
-          return returnArr;
-        })();
-        returnObj.times = (function() {
-          var returnArr = [];
-          for (var i = 0; i < inArr.length; i++) {
-            returnArr.push(inArr[i].time);
-          }
-          return returnArr;
-        })();
-        returnObj.sizes = (function() {
-          var returnArr = [];
-          for (var i = 0; i < inArr.length; i++) {
-            returnArr.push(inArr[i].size);
-          }
-          return returnArr;
-        })();
-        return returnObj;
-      };
-
       var cmd;
-      var stat = {};
-      var stats = [];
+      var stats = {};
       var error1;
       var error2;
       var error3;
@@ -130,8 +80,7 @@ var Directory = (function(inPath) {
         try {
           system.callSystem(cmd);
         } catch (e) {
-          Window.alert(e, SCRIPT_NAME);
-          return null;
+          catchError(e);
         };
 
         try {
@@ -150,61 +99,64 @@ var Directory = (function(inPath) {
             re = new RegExp('^.*(\.' + extension + ').*$', 'igm');
             raw = raw.match(re);
 
-            var stats = [];
-            var stat = {};
+            var stats = {};
             var s;
+            var d;
+            var t;
+            var z;
+            var n;
 
             if (raw) {
               for (var i = 0; i < raw.length; i++) {
                 s = raw[i].replace(/[,]/gim, '');
                 s = s.match(/((\S+))/gim);
-                stat = {
-                  date: String(s.shift()),
-                  time: String(s.shift()),
-                  size: parseInt(s.shift(), 10),
-                  name: String(s.join(' ')),
+
+                d = String(s.shift());
+                t = String(s.shift());
+                z = parseInt(s.shift(), 10);
+                n = String(s.join(' '));
+
+                stats[n] = {
+                  index: i,
+                  date: d,
+                  time: t,
+                  size: z,
+                  name: n,
                 };
-                stats.push(stat);
               }
-              return returnObject(stats);
+              return stats;
             } else {
-              stat = {
+              stats['Error.'] = {
+                index: 0,
                 date: 'n/a',
                 time: 'n/a',
                 size: 'n/a',
                 name: 'Error.',
-                raw: raw,
               };
-              stats.push(stat);
-              return returnObject(stats);
+              return stats;
             }
           } else {
-            stat = {
+            stats['Invalid path.'] = {
+              index: 0,
               date: 'n/a',
               time: 'n/a',
-              size: 0,
+              size: 'n/a',
               name: 'Invalid path.',
-              raw: raw,
             };
-            stats = [];
-            stats.push(stat);
-            return returnObject(stats);
+            return stats;
           }
         } catch (e) {
-          Window.alert(e, SCRIPT_NAME);
-          stat = {
+          stats['Error.'] = {
+            index: 0,
             date: 'n/a',
             time: 'n/a',
             size: 'n/a',
             name: 'Error.',
-            raw: raw,
           };
-          stats = [];
-          stats.push(stat);
-          return returnObject(stats);
+          return stats;
         }
       }
     },
   };
   return cls;
-}());
+}();

@@ -5,9 +5,11 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
   var aerenderButton;
   var playButton;
   var batchButton;
+  var stopButton;
   var importButton;
   var browseButton;
   var framesButton;
+  var restoreButton;
   var versionsIncrement;
   var versionsReset;
   var versionsDropdown;
@@ -24,7 +26,6 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           orientation: 'row',
         }
       );
-
       palette.size = [0, 0];
 
       var elemSize = 20;
@@ -49,6 +50,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         {
           name: 'aerenderButton',
           style: 'toolbutton',
+          toggle: false,
         }
       );
       aerenderButton.onClick = function() {
@@ -70,6 +72,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         {
           name: 'aerenderButton',
           style: 'toolbutton',
+          toggle: false,
         }
       );
       batchButton.onClick = function() {
@@ -83,6 +86,28 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       batchButton.alignment = 'left';
       batchButton.enabled = false;
       batchButton.helpTip = 'Save a .bat file and start background render';
+
+      stopButton = controlsGroup1.add(
+        'iconbutton',
+        undefined,
+        ICON_FILES.stopRender,
+        {
+          name: 'stopButton',
+          style: 'toolbutton',
+          toggle: false,
+        }
+      );
+      stopButton.onClick = function() {
+        try {
+          stopButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
+      stopButton.size = [elemSize, elemSize];
+      stopButton.alignment = 'left';
+      stopButton.enabled = true;
+      stopButton.helpTip = 'Stop background processes';
 
       UIsep = controlsGroup1.add(
         'iconbutton',
@@ -103,6 +128,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         {
           name: 'playButton',
           style: 'toolbutton',
+          toggle: false,
         }
       );
       playButton.onClick = function() {
@@ -125,6 +151,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         {
           name: 'browseButton',
           style: 'toolbutton',
+          toggle: false,
         }
       );
       browseButton.onClick = function() {
@@ -145,6 +172,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         {
           name: 'restoreButton',
           style: 'toolbutton',
+          toggle: false,
         }
       );
       restoreButton.onClick = function() {
@@ -165,6 +193,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         {
           name: 'framesButton',
           style: 'toolbutton',
+          toggle: false,
         }
       );
       framesButton.onClick = function() {
@@ -185,6 +214,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         {
           name: 'refreshButton',
           style: 'toolbutton',
+          toggle: false,
         }
       );
       refreshButton.helpTip = 'Refresh';
@@ -200,10 +230,13 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       var settingsButton = controlsGroup1.add(
         'iconbutton',
         undefined,
-        ICON_FILES.settingsButton, {
-        name: 'settingsButton',
-        style: 'toolbutton',
-      });
+        ICON_FILES.settingsButton,
+        {
+          name: 'settingsButton',
+          style: 'toolbutton',
+          toggle: false,
+        }
+      );
       settingsButton.onClick = function() {
         try {
           settingsButton_onClick();
@@ -321,6 +354,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         {
         name: 'importButton',
         style: 'toolbutton',
+        toggle: false,
         }
       );
       importButton.helpTip = 'Import output into project';
@@ -357,8 +391,20 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       });
       cls.prototype.listItem = listItem;
       listItem.size = [0, 0];
-      listItem.onChange = listItem_onChange;
-      listItem.onDoubleClick = listItem_onDoubleClick;
+      listItem.onChange = function() {
+        try {
+          listItem_onChange();
+        } catch (e) {
+          catchError(e);
+        }
+      };
+      listItem.onDoubleClick = function() {
+        try {
+          listItem_onDoubleClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
       listItem.onActivate = function() {
         // cls.prototype.refresh();
       };
@@ -521,6 +567,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         !(inColumn1[0] === 'No active output modules found.')
       ) {
         var item = '';
+
         for (var i = 0; i < inColumn1.length; i++) {
           item = listItem.add('item', inColumn1[i]);
 
@@ -560,7 +607,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     disable: function() {
       button_copy.enabled = false;
       palette.update();
-      palette.layout.layout();
+      palette.layout.layout(true);
     },
 
     setdropdown: function(inArr) {
@@ -586,10 +633,28 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     },
 
     aerender: function(promptForFile) {
+      if (!(listItem.selection)) {
+        return;
+      }
+
+      if (!aerenderOkToStart(data.item(listItem.selection.index).rqIndex)) {
+        Window.alert(
+          '\'Skip Existing Files\' is available only with ONE output module of type \'Sequence\'',
+          SCRIPT_NAME + ': Multiple sequences in Render Queue Item'
+        );
+        return;
+      }
+
       var omItem = data.getOutputModule(
         data.item(listItem.selection.index).rqIndex,
         data.item(listItem.selection.index).omIndex
       );
+
+      if (omItem === null) {
+        cls.prototype.clear();
+        refreshButton_onClick();
+        return;
+      }
 
       var pathcontrol = new Pathcontrol();
       pathcontrol.initFromOutputModule(omItem);
@@ -690,9 +755,8 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     },
 
     refresh: function() {
-      data.setData();
-
       var cs = cls.prototype.getSelection();
+      data.setData(cs);
 
       cls.prototype.clear();
       cls.prototype.setlist(
@@ -716,10 +780,20 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
    * Review the selected render output in external player
    */
   function playButton_onClick() {
+    if (!(listItem.selection)) {
+      return;
+    }
+
     var omItem = data.getOutputModule(
       data.item(listItem.selection.index).rqIndex,
       data.item(listItem.selection.index).omIndex
     );
+
+    if (omItem === null) {
+      cls.prototype.clear();
+      refreshButton_onClick();
+      return;
+    }
 
     var pathcontrol = new Pathcontrol();
     pathcontrol.initFromOutputModule(omItem);
@@ -809,10 +883,20 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
    * Reveal the selected render output in the explorer
    */
   function restoreButton_onClick() {
+    if (!(listItem.selection)) {
+      return;
+    }
+
     var omItem = data.getOutputModule(
       data.item(listItem.selection.index).rqIndex,
       data.item(listItem.selection.index).omIndex
     );
+
+    if (omItem === null) {
+      cls.prototype.clear();
+      refreshButton_onClick();
+      return;
+    }
 
     var pathcontrol = new Pathcontrol();
     pathcontrol.initFromOutputModule(omItem);
@@ -915,21 +999,38 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
    * Refresh data
    */
   function refreshButton_onClick() {
-    try {
-      cls.prototype.refresh();
-    } catch (e) {
-      catchError(e);
+    var keys = [];
+    for (var key in data) {
+      keys.push(key);
     }
+
+    var cs = cls.prototype.getSelection();
+
+    if (keys.length !== numOutputModules()) {
+      cls.prototype.clear();
+    }
+    cls.prototype.refresh();
+    cls.prototype.setSelection(cs);
   };
 
   /**
    * Opens the frame inspector window
    */
   function framesButton_onClick() {
+    if (!(listItem.selection)) {
+      return;
+    }
+
     var omItem = data.getOutputModule(
       data.item(listItem.selection.index).rqIndex,
       data.item(listItem.selection.index).omIndex
     );
+
+    if (omItem === null) {
+      cls.prototype.clear();
+      refreshButton_onClick();
+      return;
+    }
 
     var pathcontrol = new Pathcontrol();
     pathcontrol.initFromOutputModule(omItem);
@@ -988,13 +1089,48 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
   }
 
   /**
+   * Shos the task manager window.
+   */
+  function stopButton_onClick() {
+    var manager = new Taskmanager();
+    var PIDs = manager.getPIDs();
+
+    if (PIDs.length === 0) {
+      Window.alert('No background processes running.',
+      SCRIPT_NAME
+    );
+      return;
+    } else if (PIDs.length === 1) {
+      var call = manager.kill(PIDs[0]);
+      Window.alert(call, SCRIPT_NAME);
+      return;
+    } else {
+      var managerWindow = new TaskmanagerWindow(manager);
+      managerWindow.show();
+      return;
+    }
+  }
+
+  /**
    * Import render output as footage
    */
   function importButton_onClick() {
+    if (!(listItem.selection)) {
+      return;
+    }
+
+    data.setData(listItem.selection.index);
+
     var omItem = data.getOutputModule(
       data.item(listItem.selection.index).rqIndex,
       data.item(listItem.selection.index).omIndex
     );
+
+    if (omItem === null) {
+      cls.prototype.clear();
+      refreshButton_onClick();
+      return;
+    }
 
     var pathcontrol = new Pathcontrol();
     pathcontrol.initFromOutputModule(omItem);
@@ -1025,12 +1161,22 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
    * Increments version by one
    */
   function versionsIncrement_onClick() {
+    if (!(listItem.selection)) {
+      return;
+    }
+
     var cs = cls.prototype.getSelection();
 
     var omItem = data.getOutputModule(
       data.item(listItem.selection.index).rqIndex,
       data.item(listItem.selection.index).omIndex
     );
+
+    if (omItem === null) {
+      cls.prototype.clear();
+      refreshButton_onClick();
+      return;
+    }
 
     var pathcontrol = new Pathcontrol();
     pathcontrol.initFromOutputModule(omItem);
@@ -1055,18 +1201,31 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     settings.setbasepath();
     cls.prototype.setSelection(cs);
   }
+
   /**
    * Resets the version to 1
    */
   function versionsReset_onClick() {
+    if (!(listItem.selection)) {
+      return;
+    }
+
     var cs = cls.prototype.getSelection();
 
     var omItem = data.getOutputModule(
       data.item(listItem.selection.index).rqIndex,
       data.item(listItem.selection.index).omIndex
     );
+
+    if (omItem === null) {
+      cls.prototype.clear();
+      refreshButton_onClick();
+      return;
+    }
+
     var pathcontrol = new Pathcontrol();
     pathcontrol.initFromOutputModule(omItem);
+
     pathcontrol.setVersion(1);
     pathcontrol.apply(
       data.item(listItem.selection.index)
@@ -1090,39 +1249,6 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
   }
 
   /**
-   * Sets the default renderQueue item properties.
-   * As of CC 2018 the output module properties are
-   * still read-only. Come on Adobe...
-   * @param {integer} rqIndex Render Queue item index (1-based).
-   * @param {integer} omIndex Render Queue OutputModule index (1-based).
-   * @param {object} pathcontrol Pathcontrol instance.
-   */
-  function setRenderQueueItemDefaults(rqIndex, omIndex, pathcontrol) {
-    var rqItem = app.project.renderQueue.item(rqIndex);
-    var omItem = data.getOutputModule(rqIndex, omIndex);
-
-    rqItem.setSetting('Time Span', 0); // 'Length of the comp'
-    if (pathcontrol.getPadding() === 0) {
-      rqItem.setSetting('Skip Existing Files', false);
-    } else {
-      rqItem.setSetting('Skip Existing Files', true);
-    }
-    rqItem.setSetting('Quality', 2); // 'best'
-    rqItem.setSetting('Resolution', '1,1'); // 'full' {'x': 1, 'y': 1}
-
-    omItem.setSetting('Video Output', true);
-    omItem.setSetting('Use Comp Frame Number', false);
-    omItem.setSetting('Starting #', 1);
-    omItem.setSetting('Resize', false);
-
-    // TODO: get Adobe to make these variables scriptable.
-    // omItem.setSetting('Format', 7); // 'PNG' - READ ONLY PROPERTY
-    // omItem.setSetting('Channels', 1); // 'RGBA' - READ ONLY PROPERTY
-    // omItem.setSetting('Depth', 32); // 'Millions+' - READ ONLY PROPERTY
-    // omItem.setSetting('Color', 0); // 'Straight' - READ ONLY PROPERTY
-  };
-
-  /**
    * Event triggered when the dropdown menu selection changes
    * @param  {[type]} versionsDropdown the menu (self)
    */
@@ -1133,12 +1259,22 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       return;
     }
 
+    if (!(listItem.selection)) {
+      return;
+    }
+
     var fsName = getSetting('pathcontrol_fsName');
 
     var omItem = data.getOutputModule(
       data.item(listItem.selection.index).rqIndex,
       data.item(listItem.selection.index).omIndex
     );
+
+    if (omItem === null) {
+      cls.prototype.clear();
+      refreshButton_onClick();
+      return;
+    }
 
     var pathcontrol = new Pathcontrol();
     pathcontrol.initFromOutputModule(omItem);
@@ -1214,8 +1350,9 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
   function listItem_onChange() {
     if (listItem.selection) {
       aerenderButton.enabled = true;
-      playButton.enabled = true;
       batchButton.enabled = true;
+      stopButton.enabled = true;
+      playButton.enabled = true;
       importButton.enabled = true;
       browseButton.enabled = true;
       restoreButton.enabled = true;
@@ -1228,6 +1365,13 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         data.item(listItem.selection.index).rqIndex,
         data.item(listItem.selection.index).omIndex
       );
+
+      if (omItem === null) {
+        cls.prototype.clear();
+        refreshButton_onClick();
+        return;
+      }
+
       var pathcontrol = new Pathcontrol();
       pathcontrol.initFromOutputModule(omItem);
 
@@ -1267,6 +1411,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       aerenderButton.enabled = false;
       playButton.enabled = false;
       batchButton.enabled = false;
+      stopButton.enabled = true;
       importButton.enabled = false;
       browseButton.enabled = false;
       restoreButton.enabled = false;

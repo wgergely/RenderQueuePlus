@@ -460,3 +460,91 @@ function openLink(url) {
    linkJumper.close();
    linkJumper.execute();
 }
+
+/**
+ * Sets the default renderQueue item properties.
+ * As of CC 2018 the output module properties are
+ * still read-only. Come on Adobe...
+ * @param {integer} rqIndex Render Queue item index (1-based).
+ * @param {integer} omIndex Render Queue OutputModule index (1-based).
+ * @param {object} pathcontrol Pathcontrol instance.
+ */
+function setRenderQueueItemDefaults(rqIndex, omIndex, pathcontrol) {
+  var rqItem = app.project.renderQueue.item(rqIndex);
+  var omItem = data.getOutputModule(rqIndex, omIndex);
+
+  rqItem.setSetting('Time Span', 0); // 'Length of the comp'
+  if (pathcontrol.getPadding() === 0) {
+    rqItem.setSetting('Skip Existing Files', false);
+  } else {
+    rqItem.setSetting('Skip Existing Files', true);
+  }
+
+  /**
+   * Overrides output module settings.
+   * TODO: This perhaps needs exposing.
+   * Keeping it unexposed for the time being.
+   */
+   function setDefaults() {
+    rqItem.setSetting('Quality', 2); // 'best'
+    rqItem.setSetting('Resolution', '1,1'); // 'full' {'x': 1, 'y': 1}
+    omItem.setSetting('Video Output', true);
+    omItem.setSetting('Use Comp Frame Number', false);
+    omItem.setSetting('Starting #', 1);
+    omItem.setSetting('Resize', false);
+  }
+
+  // TODO: get Adobe to make these variables scriptable.
+  // omItem.setSetting('Format', 7); // 'PNG' - READ ONLY PROPERTY
+  // omItem.setSetting('Channels', 1); // 'RGBA' - READ ONLY PROPERTY
+  // omItem.setSetting('Depth', 32); // 'Millions+' - READ ONLY PROPERTY
+  // omItem.setSetting('Color', 0); // 'Straight' - READ ONLY PROPERTY
+};
+
+/**
+ * Checks if an object is empty
+ * @param  {object}  o the object to check
+ * @return {Boolean}
+ */
+function isObjectEmpty(o) {
+  var key;
+  for (key in o) {
+    return false;
+  }
+  return true;
+}
+
+/**
+ * Returns a count of output modules
+ * @return {number} number of output modules
+ */
+function numOutputModules() {
+  var i = 1;
+  var j = 1;
+  var k = 0;
+  for (; i <= app.project.renderQueue.numItems; i++) {
+    for (; j <= app.project.renderQueue.item(i).numOutputModules; j++) {
+      ++k;
+    }
+  }
+  return k;
+};
+
+/**
+ * Runs checks before executing aerender
+ * @param {Number} rqIndex Index
+ * @return {Bool} [description]
+ */
+function aerenderOkToStart(rqIndex) {
+  var err = 'After Effects warning: \'Skip Existing Files\' is available only with ONE output module of type \'Sequence\'.';
+  if (app.project.renderQueue.item(rqIndex).numOutputModules > 1) {
+    if (app.project.renderQueue.item(rqIndex).getSetting('Skip Existing Files')) {
+      return false;
+    } else {
+      return true;
+    }
+  } else {
+    return true;
+  }
+  return true;
+}

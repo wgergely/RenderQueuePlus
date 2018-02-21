@@ -19,29 +19,30 @@ renderQueuePlus = function(thisObj) {
 
   var projectFile = app.project.file;
   var scriptFile = new File($.fileName);
+  var PROCESSES = {};
 
   // @include "common.jsx"
   // @include "icons.jsx"
   // @include "settings.jsx"
   // @include "directory.jsx"
+  // @include "progressbar.jsx"
   // @include "data.jsx"
   // @include "framewindow.jsx"
   // @include "pathcontrol.jsx"
   // @include "mainwindow.jsx"
   // @include "aeparchive.jsx"
-
-  var settings = new Settings();
-  settings.setbasepath();
-
-  var data = new Data();
-  data.setData();
+  // @include "taskmanager.jsx"
+  // @include "taskmanagerUI.jsx"
 
   // Module globals
+  var settings = new Settings();
   var listItem;
   var listGroup;
   var palette;
-
+  var data = new Data();
   var mainWindow = new MainWindow();
+
+
   mainWindow.setlist(
     data.compnames(),
     data.filenames(),
@@ -51,7 +52,5 @@ renderQueuePlus = function(thisObj) {
     data.rendered().sizes
   );
   mainWindow.show();
-
-  this.window = mainWindow;
-  return this;
+  return mainWindow;
 }(this);
