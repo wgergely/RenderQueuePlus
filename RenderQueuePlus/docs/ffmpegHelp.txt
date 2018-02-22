@@ -1,0 +1,12 @@
+When 'ffmpeg.exe' is set and the 'Create QuickTime' box ticked,
+RenderQueue+ will create a QuickTime automatically from the rendered images sequence.
+
+You can customise the render quality of the resulting mp4 by changing the -crf value.
+
+The default switches are:
+-vcodec libx264 -crf 12 -pix_fmt yuv420p
+
+('mp4' is hard-coded as the container.)
+
+You can learn more, here:
+https://trac.ffmpeg.org/wiki/Encode/H.264

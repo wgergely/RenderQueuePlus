@@ -42,7 +42,7 @@ var Data = function() {
   function setData(dataObj, rqItem, omItem) {
     if (!(dataObj.ready && omItem.file)) {
       dataObj.sequencename = 'File not yet specified.';
-      dataObj.filename = 'File not yet specified.';
+      dataObj.displayName = 'File not yet specified.';
       dataObj.ext = null;
       dataObj.padding = null;
 
@@ -95,34 +95,48 @@ var Data = function() {
       (rqItem.comp.displayStartTime / oneframe)
     );
     dataObj.endframe = Math.round(
-      (rqItem.timeSpanStart / oneframe) +
+        (rqItem.timeSpanStart / oneframe) +
       (rqItem.timeSpanDuration / oneframe)
     );
     dataObj.duration = Math.round(
       dataObj.endframe - dataObj.startframe
     );
+    dataObj.framerate = (1 / rqItem.comp.frameDuration);
+    dataObj.width = rqItem.comp.width;
+    dataObj.height = rqItem.comp.height;
 
     dataObj.padding = getPadding(omItem.file.name);
+
+    dataObj.basepath = omItem.file.parent.fsName;
+
     dataObj.ext = omItem.file.name.slice(-3);
     if (!dataObj.padding) {
+      dataObj.basename = omItem.file.displayName.slice(
+        0, (dataObj.ext.length + 1 * (-1))
+      );
       dataObj.sequencename = (
         decodeURI(decodeURI(omItem.file.name)) + ' ' + '[' +
         pad(dataObj.startframe, dataObj.padding) + '-' +
         pad(dataObj.endframe, dataObj.padding) + ']'
       );
     } else {
+      dataObj.basename = omItem.file.displayName.slice(
+        0, ((dataObj.padding + 2 + dataObj.ext.length + 1) * (-1))
+      );
+
       dataObj.sequencename = (
-        decodeURI(decodeURI(omItem.file.name).slice(
-          0, ((dataObj.padding + 2 + 4) * (-1)))) +
-        '[' + pad(dataObj.startframe, dataObj.padding) + '-' +
-        pad(dataObj.endframe, dataObj.padding) + ']' + '.' + dataObj.ext
+        dataObj.basename +
+        '[' + pad(dataObj.startframe, dataObj.padding) +
+        '-' +
+        pad(dataObj.endframe, dataObj.padding) + ']' + '.' +
+        dataObj.ext
       );
     };
 
-    dataObj.filename = (
-      decodeURI(omItem.file.parent.name) +
-      sep +
-      decodeURI(dataObj.sequencename)
+    dataObj.displayName = (
+      omItem.file.parent.displayName +
+      '/' +
+      dataObj.sequencename
     );
 
     var dir = new Directory(omItem.file.parent);
@@ -454,7 +468,9 @@ var Data = function() {
           };
         }();
 
-        dataObj.filename = null;
+        dataObj.displayName = null;
+        dataObj.basepath = null;
+        dataObj.basename = null;
 
         dataObj.sequencename = null;
         dataObj.ext = null;
@@ -462,6 +478,9 @@ var Data = function() {
         dataObj.startframe = null;
         dataObj.endframe = null;
         dataObj.duration = null;
+        dataObj.framerate = null;
+        dataObj.width = null;
+        dataObj.height = null;
 
         dataObj.exists = {
           frames: null,
@@ -551,7 +570,7 @@ var Data = function() {
       }
     };
 
-    this.filenames = function() {
+    this.displayNames = function() {
       var arr = [];
       var keys = [];
 
@@ -564,7 +583,7 @@ var Data = function() {
       } else {
         for (var i = 0; i < keys.length; i++) {
           if (DATA[i].file) {
-            arr.push(DATA[i].filename);
+            arr.push(DATA[i].displayName);
           } else {
             arr.push('Not queued');
           }

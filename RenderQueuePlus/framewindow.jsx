@@ -194,19 +194,18 @@ var FrameWindow = function() {
       var cs = mainWindow.getSelection();
       data.setData(cs);
 
-      searchField.onChanging();
+      searchfield_onChanged(searchField.text);
 
       mainWindow.clear();
       mainWindow.setlist(
         data.compnames(),
-        data.filenames(),
+        data.displayNames(),
         data.rendered().frames,
         data.missing().frames,
         data.incomplete().frames,
         data.rendered().sizes
       );
       mainWindow.setSelection(cs);
-
       settings.setbasepath();
     };
 
@@ -441,12 +440,14 @@ var FrameWindow = function() {
     searchField.helpTip = 'Filter the list of files by entering a range, eg. 1-100,\n' +
     'and/or numbers separated by comas, eg. 1,2,3,8';
     cls.prototype.searchField = searchField;
-    //
-    searchField.onChanging = function() {
+
+    var searchButton = searchSubGroup.add('button', undefined, 'Filter', {
+      name: 'button_filter',
+    });
+    searchButton.onClick = function() {
       try {
-        searchfield_onChanged(this.text);
+        searchfield_onChanged(searchField.text);
       } catch (e) {
-        // if (e)
         catchError(e);
       }
     };
@@ -473,43 +474,56 @@ var FrameWindow = function() {
         return;
       }
 
-      try {
-        var item = data.item(mainWindow.getSelection());
-        var arr = getArrayFromRange(text, item.duration);
+      var item = data.item(mainWindow.getSelection());
+      var d = getArrayFromRange(text, item.duration);
 
-        if (arr.length == 0) {
-          return;
+      var keys = [];
+      var key;
+      for (key in d) {
+        keys.push(key);
+      }
+
+      if (keys.length === 0) {
+        return;
+      }
+
+      var frameId;
+      var filteredNames = [];
+      var filteredDates = [];
+      var filteredSizes = [];
+
+      for (var i = 0; i < item.exists.names.length; i++) {
+        frameId = parseInt(getFrameNumberFromName(item.exists.names[i]), 10);
+        if (d.hasOwnProperty(frameId)) {
+          filteredNames.push(item.exists.names[i]);
+          filteredDates.push(item.exists.dates[i]);
+          filteredSizes.push(item.exists.sizes[i]);
         }
+      }
 
-        var paddedIdx;
-        var filteredNames = [];
-        var filteredDates = [];
-        var filteredSizes = [];
-
-        for (var i = 0; i < item.exists.names.length; i++) {
-          var name = item.exists.names[i];
-          var date = item.exists.dates[i];
-          var size = item.exists.sizes[i];
-          for (var j = 0; j < arr.length; j++) {
-            paddedIdx = pad(arr[j], item.padding);
-            if (name.indexOf(paddedIdx) > -1) {
-              filteredNames.push(name);
-              filteredDates.push(date);
-              filteredSizes.push(size);
-            };
+      if (filteredNames.length > 0) {
+        listItem.removeAll();
+        try {
+          setlist(
+            w,
+            3,
+            filteredNames,
+            filteredDates,
+            filteredSizes
+          );
+        } catch (e) {
+          if (e.message === 'Object is invalid') {
+            listItem.removeAll();
+            setlist(
+              w,
+              3,
+              filteredNames,
+              filteredDates,
+              filteredSizes
+            );
+            return;
           }
         }
-
-        listItem.removeAll();
-        setlist(
-          w,
-          3,
-          filteredNames,
-          filteredDates,
-          filteredSizes
-        );
-      } catch (e) {
-        $.writeln(e);
       }
     };
 
@@ -677,7 +691,8 @@ var FrameWindow = function() {
 
     // searchGroup.size = [initX, 20];
     searchInfoField.size = [initX * 0.333, 20];
-    searchField.size = [initX * 0.666, 20];
+    searchField.size = [initX * 0.5, 20];
+    searchButton.size = [initX * 0.167, 20];
 
     infoGroup1.size = [initX, 20];
     infoGroup2.size = [initX, 20];
@@ -717,6 +732,7 @@ var FrameWindow = function() {
 
   var cls = function() {
     var window;
+    var cls = this;
 
     this.setIndex = function(i) {
       index = i;
@@ -737,9 +753,16 @@ var FrameWindow = function() {
       }
       window.show();
     };
+
+    this.window = window;
   };
   cls.prototype = {
     searchField: null,
+
+    update: function() {
+      this.window.layout.layout(true);
+      this.window.update();
+    },
   };
   return cls;
 }();

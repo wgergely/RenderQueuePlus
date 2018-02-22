@@ -47,7 +47,6 @@ renderQueuePlus = function(thisObj) {
 
   var projectFile = app.project.file;
   var scriptFile = new File($.fileName);
-  var PROCESSES = {};
 
   // @include "common.jsx"
   // @include "icons.jsx"
@@ -57,6 +56,7 @@ renderQueuePlus = function(thisObj) {
   // @include "data.jsx"
   // @include "framewindow.jsx"
   // @include "pathcontrol.jsx"
+  // @include "ffmpeg.jsx"
   // @include "mainwindow.jsx"
   // @include "aeparchive.jsx"
   // @include "taskmanager.jsx"
@@ -73,7 +73,7 @@ renderQueuePlus = function(thisObj) {
 
   mainWindow.setlist(
     data.compnames(),
-    data.filenames(),
+    data.displayNames(),
     data.rendered().frames,
     data.missing().frames,
     data.incomplete().frames,

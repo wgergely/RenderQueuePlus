@@ -48,6 +48,58 @@ function getPadding(n) {
 }
 
 /**
+ * Returns the number of digits of a number found
+ * in the given string.
+ * @param  {String} inString String to examine
+ * @return {Number}          the number of digits
+ */
+function getPaddingFromName(inString) {
+  var re1 = /\d{5}\.[a-zA-Z]+$/ig;
+  var re2 = /\d{4}\.[a-zA-Z]+$/ig;
+  var re3 = /\d{3}\.[a-zA-Z]+$/ig;
+  var re4 = /\d{2}\.[a-zA-Z]+$/ig;
+  if (re1.test(inString)) {
+    return 5;
+  } else if (re2.test(inString)) {
+    return 4;
+  } else if (re3.test(inString)) {
+    return 3;
+  } else if (re4.test(inString)) {
+    return 2;
+  } else {
+    return null;
+  }
+}
+
+/**
+ * Returns the frame number
+ * @param  {String} inString a path to a file.
+ * @return {String}         the frame number as a string with padding included.
+ */
+function getFrameNumberFromName(inString) {
+  var re1 = /\d{5}\.[a-zA-Z]+$/ig;
+  var re2 = /\d{4}\.[a-zA-Z]+$/ig;
+  var re3 = /\d{3}\.[a-zA-Z]+$/ig;
+  var re4 = /\d{2}\.[a-zA-Z]+$/ig;
+
+  var re;
+
+  if (re1.test(inString)) {
+    re = re1;
+  } else if (re2.test(inString)) {
+    re = re2;
+  } else if (re3.test(inString)) {
+    re = re3;
+  } else if (re4.test(inString)) {
+    re = re4;
+  } else {
+    return null;
+  }
+
+  return inString.match(re)[0].split('.')[0];
+}
+
+/**
  * Return the version number from the given string
  * eg 'v001'
  * @param  {string} inString string containing the version
@@ -86,7 +138,7 @@ function uniq(a) {
 }
 
 /**
- * Converts a range to an array of numbers
+ * Converts a range to a dictionary of numbers
  * eg. '1-250' results in [1,2,3,..,250].
  * http://stackoverflow.com/questions/2270910/how-to-convert-sequence-of-numbers-in-an-array-to-range-of-numbers
  * @param  {string} string [description]
@@ -94,59 +146,84 @@ function uniq(a) {
  * @return {array}       [description]
  */
 function getArrayFromRange(string, limit) {
+  var d = {};
+
+  var match;
+  var start;
+  var end;
+  var duration;
+  var idx;
+
   if (string.indexOf(',') > 0) {
-    var returnArr = [];
     string = string.split(',');
     for (var i = 0; i < string.length; i++) {
       if (string[i].indexOf('-') > -1) {
-        // range
-        returnArr = returnArr.concat(makeArray(string[i]));
-      } else {
-        // single number
-        var match = string[i].match(/(\d*)/);
-        if (match) {
-          returnArr.push(parseInt(string[i]));
+        match = string[i].match(/(\d*)(-+)(\d*)/);
+
+        if (!(match)) {
+          continue;
         }
+
+        start = parseInt(match[1], 10);
+        end = parseInt(match[3], 10);
+
+        if (start > end) {
+          start = parseInt(match[3], 10);
+          end = parseInt(match[1], 10);
+        };
+
+        duration = end - start;
+        if (duration > limit) {
+          end = limit;
+        }
+
+        idx = start;
+        for (idx; idx <= end; idx++) {
+          d[idx] = idx;
+        }
+      } else {
+        match = string[i].match(/(\d*)/);
+        if (!(match)) {
+          continue;
+        }
+
+        d[parseInt(string[i], 10)] = parseInt(string[i], 10);
       }
     }
-    return uniq(returnArr);
+    return d;
   } else {
     if (string.indexOf('-') > -1) {
       // range
-      return makeArray(string);
+      match = string.match(/(\d*)(-+)(\d*)/);
+
+      if (!(match)) {
+        return {};
+      }
+
+      start = parseInt(match[1], 10);
+      end = parseInt(match[3], 10);
+
+      if (start > end) {
+        start = parseInt(match[3], 10);
+        end = parseInt(match[1], 10);
+      };
+
+      duration = end - start;
+      if (duration > limit) {
+        end = limit;
+      }
+
+      idx = start;
+      for (idx; idx <= end; idx++) {
+        d[idx] = idx;
+      }
+      return d;
     } else {
       // single number
-      return [parseInt(string)];
+      d = {};
+      d[parseInt(string, 10)] = parseInt(string, 10);
+      return d;
     }
-  }
-
-  /**
-   * Private convenience function to create an array from a range string.
-   * @param  {strint} string eg. 1-20
-   * @return {array}        array of number
-   */
-  function makeArray(string) {
-    var match = string.match(/(\d*)(-+)(\d*)/);
-    if (!(match)) {
-      return [];
-    }
-    var start = parseInt(match[1]);
-    var end = parseInt(match[3]);
-    if (start > end) {
-      start = parseInt(match[3]);
-      end = parseInt(match[1]);
-    };
-
-    var duration = end - start;
-    if (duration > limit) {
-      end = limit;
-    }
-
-    var arr = [];
-    for (start; start <= end; start++) {
-      arr.push(start);
-    }
-    return arr;
   }
 }
 
@@ -382,12 +459,10 @@ function alertScroll(title, input) {
     multiline: true,
     scrolling: true,
   });
-  list.maximumSize.height = w.maximumSize.height - 100;
-  list.minimumSize.width = 550;
   w.add('button', undefined, 'Close', {
     name: 'ok',
   });
-  list.size = [850, 500];
+  list.size = [600, 300];
   w.show();
 }
 
@@ -549,8 +624,8 @@ function numOutputModules() {
   var i = 1;
   var j = 1;
   var k = 0;
-  for (; i <= app.project.renderQueue.numItems; i++) {
-    for (; j <= app.project.renderQueue.item(i).numOutputModules; j++) {
+  for (i = 1; i <= app.project.renderQueue.numItems; i++) {
+    for (j = 1; j <= app.project.renderQueue.item(i).numOutputModules; j++) {
       ++k;
     }
   }

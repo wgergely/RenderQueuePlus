@@ -97,7 +97,7 @@ var Directory = function(inPath) {
 
       if (File.fs === 'Windows') {
         var tempOutput = new File(
-          Folder.temp.fsName + '/' + 'RenderQueueTempOutput'
+          Folder.temp.fsName + sep + 'RenderQueueTempOutput'
         );
 
         cmd = 'cmd /c "' +

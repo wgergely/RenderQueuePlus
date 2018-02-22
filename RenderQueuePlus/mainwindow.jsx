@@ -111,28 +111,6 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       batchButton.enabled = false;
       batchButton.helpTip = 'Save a .bat file and start background render';
 
-      stopButton = controlsGroup1.add(
-        'iconbutton',
-        undefined,
-        ICON_FILES.stopRender,
-        {
-          name: 'stopButton',
-          style: 'toolbutton',
-          toggle: false,
-        }
-      );
-      stopButton.onClick = function() {
-        try {
-          stopButton_onClick();
-        } catch (e) {
-          catchError(e);
-        }
-      };
-      stopButton.size = [elemSize, elemSize];
-      stopButton.alignment = 'left';
-      stopButton.enabled = true;
-      stopButton.helpTip = 'Stop background processes';
-
       UIsep = controlsGroup1.add(
         'iconbutton',
         undefined,
@@ -299,7 +277,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       });
       controlsGroup2.spacing = 5;
       controlsGroup2.alignment = ['right', 'top'];
-      controlsGroup2.preferredSize = [300, ''];
+      // controlsGroup2.preferredSize = [300, ''];
 
       controlsGroup2.add(
         'statictext',
@@ -392,6 +370,29 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       importButton.size = [elemSize, elemSize];
       importButton.alignment = 'left';
       importButton.enabled = false;
+
+
+      stopButton = controlsGroup2.add(
+        'iconbutton',
+        undefined,
+        ICON_FILES.stopRender,
+        {
+          name: 'stopButton',
+          style: 'toolbutton',
+          toggle: false,
+        }
+      );
+      stopButton.onClick = function() {
+        try {
+          stopButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
+      stopButton.size = [elemSize, elemSize];
+      stopButton.alignment = 'left';
+      stopButton.enabled = true;
+      stopButton.helpTip = 'Stop background processes';
 
       listGroup = palette.add('group', undefined, {
         name: 'listGroup',
@@ -711,7 +712,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         '.bat'
       );
 
-      bat = new File(settings.tempFolder.fullName + '/' + batname);
+      bat = new File(settings.tempFolder.fsName + sep + batname);
 
       app.project.save();
 
@@ -728,7 +729,6 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
 
       if (promptForFile) {
         bat.changePath(getSetting('pathcontrol_fsName') + sep + batname);
-        // var rdir = new File();
         bat = bat.openDlg('Save aerender batch file.', 'Batch:*.bat', false);
       }
 
@@ -750,10 +750,27 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           ' -e %e%' +
           ' -sound ON -continueOnMissingFootage';
 
+        var manager = new Taskmanager();
+        var PIDs = manager.getPIDs();
+
+        if (PIDs.length === 0) {
+          if (getSetting('ffmpeg_enabled') == 'true') {
+            var ffmpeg = new FFMPEG();
+            var ffmpeg_cmd = ffmpeg.getCommand(data.item(index));
+            if (ffmpeg_cmd) {
+              cmd = (
+                cmd + ' & ' +
+                ffmpeg_cmd + ' & ' +
+                'start "" "' + data.item(index).basepath + sep + data.item(index).basename + 'h264.mp4' + '"'
+              );
+            }
+          }
+        }
+
         var start = (
           'start \"' + 'Rendering ' +
           data.item(index).compname + ' of ' +
-          app.project.file.displayName + '\" ' + cmd
+          app.project.file.displayName + '\" ' + 'cmd /c "' + cmd + '"'
         );
 
         bat.open('w');
@@ -769,33 +786,31 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     },
 
     getSelection: function() {
-      var s;
       try {
-        s = listItem.selection.index;
+        return listItem.selection.index;
       } catch (e) {
-        s = null;
+        return null;
       }
-      return s;
     },
 
     refresh: function() {
       var cs = cls.prototype.getSelection();
-      data.setData(cs);
 
       cls.prototype.clear();
       cls.prototype.setlist(
         data.compnames(),
-        data.filenames(),
+        data.displayNames(),
         data.rendered().frames,
         data.missing().frames,
         data.incomplete().frames,
         data.rendered().sizes
       );
-
       settings.setbasepath();
-
       cls.prototype.show();
-      cls.prototype.setSelection(cs);
+
+      if (!(cs === null)) {
+        cls.prototype.setSelection(cs);
+      }
     },
   };
 
@@ -1023,16 +1038,22 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
    * Refresh data
    */
   function refreshButton_onClick() {
+    var cs = cls.prototype.getSelection();
+
+    if (!(cs === null)) {
+      data.setData(cs);
+    } else {
+      data.setData();
+    }
+
     var keys = [];
     for (var key in data) {
       keys.push(key);
     }
-
-    var cs = cls.prototype.getSelection();
-
     if (keys.length !== numOutputModules()) {
       cls.prototype.clear();
     }
+
     cls.prototype.refresh();
     cls.prototype.setSelection(cs);
   };
@@ -1143,8 +1164,6 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       return;
     }
 
-    data.setData(listItem.selection.index);
-
     var omItem = data.getOutputModule(
       data.item(listItem.selection.index).rqIndex,
       data.item(listItem.selection.index).omIndex
@@ -1159,25 +1178,28 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     var pathcontrol = new Pathcontrol();
     pathcontrol.initFromOutputModule(omItem);
 
-    if (listItem.selection) {
-      var index = listItem.selection.index;
-      if (data.item(index).exists.fsNames.length < 1) {
-        Window.alert(
-          'No files have been rendered yet.',
-          SCRIPT_NAME + ': Unable to import footage'
-        );
-        return;
-      };
-      try {
-        importFootage(
-          data.item(index).exists.fsNames[0],
-          true,
-          data.item(index).compname,
-          pathcontrol.getVersionString()
-        );
-      } catch (e) {
-        catchError(e);
-      }
+    refreshButton_onClick();
+    if (!(listItem.selection)) {
+      return;
+    }
+    var index = listItem.selection.index;
+
+    if (data.item(index).exists.fsNames.length < 1) {
+      Window.alert(
+        'No files have been rendered yet.',
+        SCRIPT_NAME + ': Unable to import footage'
+      );
+      return;
+    };
+    try {
+      importFootage(
+        data.item(index).exists.fsNames[0],
+        true,
+        data.item(index).compname,
+        pathcontrol.getVersionString()
+      );
+    } catch (e) {
+      catchError(e);
     }
   }
 
@@ -1188,8 +1210,6 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     if (!(listItem.selection)) {
       return;
     }
-
-    var cs = cls.prototype.getSelection();
 
     var omItem = data.getOutputModule(
       data.item(listItem.selection.index).rqIndex,
@@ -1210,20 +1230,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       data.item(listItem.selection.index)
     );
 
-    data.setData();
-
-    cls.prototype.clear();
-    cls.prototype.setlist(
-      data.compnames(),
-      data.filenames(),
-      data.rendered().frames,
-      data.missing().frames,
-      data.incomplete().frames,
-      data.rendered().sizes
-    );
-
-    settings.setbasepath();
-    cls.prototype.setSelection(cs);
+    refreshButton_onClick();
   }
 
   /**
@@ -1233,8 +1240,6 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     if (!(listItem.selection)) {
       return;
     }
-
-    var cs = cls.prototype.getSelection();
 
     var omItem = data.getOutputModule(
       data.item(listItem.selection.index).rqIndex,
@@ -1255,21 +1260,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       data.item(listItem.selection.index)
     );
 
-    data.setData();
-
-    cls.prototype.clear();
-    cls.prototype.setlist(
-      data.compnames(),
-      data.filenames(),
-      data.rendered().frames,
-      data.missing().frames,
-      data.incomplete().frames,
-      data.rendered().sizes
-    );
-
-    settings.setbasepath();
-
-    cls.prototype.setSelection(cs);
+    refreshButton_onClick();
   }
 
   /**
@@ -1349,23 +1340,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       );
     }
 
-    data.setData();
-    var cs = cls.prototype.getSelection();
-
-    cls.prototype.clear();
-    cls.prototype.setlist(
-      data.compnames(),
-      data.filenames(),
-      data.rendered().frames,
-      data.missing().frames,
-      data.incomplete().frames,
-      data.rendered().sizes
-    );
-
-    settings.setbasepath();
-
-    // cls.prototype.show();
-    cls.prototype.setSelection(cs);
+    refreshButton_onClick();
   }
 
   /**

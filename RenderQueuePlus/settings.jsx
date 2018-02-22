@@ -108,8 +108,8 @@ var Settings = function(thisObj) {
     settings.tempPath = settings.tempFolder.fsName;
 
     settings.player = 'rv';
-    settings.rv = {};
 
+    settings.rv = {};
     var rvHelpFile = new File(
       scriptFile.parent.absoluteURI + '/docs/rvHelp.txt'
     );
@@ -121,7 +121,20 @@ var Settings = function(thisObj) {
     settings.rv.rv_call = null;
 
     settings.aerender = {};
+    settings.aerender.fsName = null;
     settings.aerender.aerender_bin = null;
+
+    settings.ffmpeg = {};
+    var ffmpegHelpFile = new File(
+      scriptFile.parent.absoluteURI + '/docs/ffmpegHelp.txt'
+    );
+    ffmpegHelpFile.open('r');
+    settings.ffmpeg.ffmpeg_help = ffmpegHelpFile.read();
+    ffmpegHelpFile.close();
+    settings.ffmpeg.fsName = null;
+    settings.ffmpeg.ffmpeg_enabled = null;
+    settings.ffmpeg.ffmpeg_bin = null;
+    settings.ffmpeg.ffmpeg_call = null;
 
     settings.pathcontrol = {};
     settings.pathcontrol.pathcontrol_help = '';
@@ -147,6 +160,13 @@ var Settings = function(thisObj) {
   /**
    * Show rv help
    */
+  function ffmpeg_helpButton_onClick() {
+    alertScroll('Help: FFmpeg Command Line Switches', settings.ffmpeg.ffmpeg_help);
+  }
+
+  /**
+   * Show rv help
+   */
   function rvHelpButton_onClick() {
     alertScroll('Help: RV Command Line Switches', settings.rv.rv_help);
   }
@@ -158,16 +178,18 @@ var Settings = function(thisObj) {
     var folder = new Folder(settings.pathcontrol.fsName);
     folder = folder.selectDlg('Select new render folder location');
 
-    if (folder) {
-      basepath = folder.fsName;
-      settings.pathcontrol.fsName = folder.fsName;
-      settings.pathcontrol.basepattern = settings.pathcontrol.fsName;
-
-      setSetting('pathcontrol_fsName', settings.pathcontrol.fsName);
-      setSetting('pathcontrol_basepattern', settings.pathcontrol.fsName);
-      setUIString('pathcontrol_fsName', settings.pathcontrol.fsName);
-      setUIString('pathcontrol_basepattern', settings.pathcontrol.fsName);
+    if (!folder) {
+      return;
     }
+
+    var basepath = folder.fsName;
+    settings.pathcontrol.fsName = folder.fsName;
+    settings.pathcontrol.basepattern = settings.pathcontrol.fsName;
+
+    setSetting('pathcontrol_fsName', settings.pathcontrol.fsName);
+    setSetting('pathcontrol_basepattern', settings.pathcontrol.fsName);
+    setUIString('pathcontrol_fsName', settings.pathcontrol.fsName);
+    setUIString('pathcontrol_basepattern', settings.pathcontrol.fsName);
   }
 
   /**
@@ -178,16 +200,77 @@ var Settings = function(thisObj) {
     reveal(folder);
   }
 
+
+  /**
+   * Reveals the currently set root path Control root folder.
+   */
+  function ffmpegExploreButton_onClick() {
+    var bin = new Folder(getSetting('ffmpeg_bin'));
+
+    if (!bin.exists) {
+      Window.alert(
+        'Couldn\'t find the item.',
+        SCRIPT_NAME + ': Item could not be found'
+      );
+      return;
+    }
+
+    try {
+      if (bin.parent.exists) {
+        reveal(bin.parent);
+      }
+    } catch (e) {
+      return;
+    }
+  }
+
+  /**
+   * Sets the ffmpeg_bin.
+   */
+  function ffmpegPickButton_onClick() {
+    var ffmpeg = new File('/');
+    ffmpeg = ffmpeg.openDlg(
+      'Select the location of the ffmpeg.exe',
+      'ffmpeg.exe:ffmpeg.exe'
+    );
+
+    if (!ffmpeg) {
+      return;
+    };
+
+    settings.ffmpeg.fsName = ffmpeg.fsName;
+    setSetting('ffmpeg_bin', settings.ffmpeg.fsName);
+    setUIString(
+      'ffmpeg_fsName',
+      ellipsis2(getSetting('ffmpeg_bin'))
+    );
+  };
+
   /**
    * Reveals the currently set root path Control root folder.
    */
   function aerenderExploreButton_onClick() {
     var bin = new Folder(getSetting('aerender_bin'));
-    reveal(bin.parent);
+
+    if (!bin.exists) {
+      Window.alert(
+        'Couldn\'t find the item.',
+        SCRIPT_NAME + ': Item could not be found'
+      );
+      return;
+    }
+
+    try {
+      if (bin.parent.exists) {
+        reveal(bin.parent);
+      }
+    } catch (e) {
+      return;
+    }
   }
 
   /**
-   * Reveals the currently set root path Control root folder.
+   * Sets the aerender bin.
    */
   function aerenderPickButton_onClick() {
     var aerender = new File('/');
@@ -196,11 +279,10 @@ var Settings = function(thisObj) {
       'aerender.exe:aerender.exe'
     );
 
-    if (aerender) {
-      string = aerender.fsName;
-    } else {
-      string = null;
+    if (!aerender) {
+      return;
     };
+
     settings.aerender.fsName = aerender.fsName;
     setSetting('aerender_bin', settings.aerender.fsName);
     setUIString(
@@ -211,10 +293,29 @@ var Settings = function(thisObj) {
 
   /**
    * Saves the custom rv call string
+   * @param {String} text
    */
-  function rvCallString_onChanged() {
-    settings.rv.rv_call = this.text;
+  function rvCallString_onChanged(text) {
+    settings.rv.rv_call = text;
     setSetting('rv_call', settings.rv.rv_call);
+  }
+
+  /**
+   * Saves the custom ffmpeg call string
+   * @param {String} text
+   */
+  function ffmpeg_callString_onChanged(text) {
+    settings.ffmpeg.ffmpeg_call = text;
+    setSetting('ffmpeg_call', settings.ffmpeg.ffmpeg_call);
+  }
+
+  /**
+   * Saves the custom rv call string
+   * @param {Boolean} value The value of the checkbox
+   */
+  function ffmpeg_enabled_onChange(value) {
+    settings.ffmpeg.ffmpeg_enabled = value;
+    setSetting('ffmpeg_enabled', settings.ffmpeg.ffmpeg_enabled);
   }
 
   /**
@@ -601,6 +702,131 @@ var Settings = function(thisObj) {
         }
       };
 
+      // ====================================================
+
+      var ffmpegPanel = binGroup.add(
+        'panel',
+        undefined,
+        'FFmpeg',
+        {
+          borderstyle: 'gray',
+          name: 'ffmpegPanel',
+        }
+      );
+      ffmpegPanel.alignChildren = ['fill', 'fill'];
+
+      var ffmpeg_pathGroup = ffmpegPanel.add(
+        'group',
+        undefined,
+        {
+          name: 'ffmpeg_pathGroup',
+        }
+      );
+
+      var ffmpeg_fsName = ffmpeg_pathGroup.add(
+        'statictext',
+        undefined,
+        '-',
+        {
+          name: 'ffmpeg_fsName',
+        }
+      );
+      ffmpeg_fsName.size = [450, 45];
+
+      var ffmpegBrowseButton = ffmpeg_pathGroup.add(
+        'button',
+        undefined,
+        'Reveal',
+        {
+          name: 'ffmpegExploreButton',
+        }
+      );
+      ffmpegBrowseButton.size = [70, 25];
+      ffmpegBrowseButton.onClick = function() {
+        try {
+          ffmpegExploreButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
+
+      var ffmpegPickButton = ffmpeg_pathGroup.add(
+        'button',
+        undefined,
+        'Pick',
+        {
+          name: 'ffmpegPickButton',
+        }
+      );
+      ffmpegPickButton.size = [70, 25];
+      ffmpegPickButton.onClick = function() {
+        try {
+          ffmpegPickButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
+
+      var ffmpeg_createGroup = ffmpegPanel.add(
+        'group',
+        undefined,
+        {
+          name: 'ffmpeg_createGroup',
+        }
+      );
+      ffmpeg_createGroup.orientation = 'row';
+
+
+      var ffmpeg_enabled = ffmpeg_createGroup.add(
+        'checkbox',
+        undefined,
+        'Create QuickTime',
+        {
+          name: 'ffmpeg_enabled',
+        }
+      );
+      ffmpeg_enabled.size = [150, 25];
+      ffmpeg_enabled.onClick = function() {
+        try {
+          ffmpeg_enabled_onChange(this.value);
+        } catch (e) {
+          catchError(e);
+        }
+      };
+
+      var ffmpeg_callString = ffmpeg_createGroup.add(
+        'edittext',
+        undefined,
+        '-vcodec libx264 -crf 12 -pix_fmt yuv420p',
+        {
+          name: 'ffmpeg_callString',
+        }
+      );
+      ffmpeg_callString.size = [290, 25];
+      ffmpeg_callString.onChange = ffmpeg_callString.onChanged = function() {
+        try {
+          ffmpeg_callString_onChanged(this.text);
+        } catch (e) {
+          catchError(e);
+        }
+      };
+
+      var ffmpeg_helpButton = ffmpeg_createGroup.add(
+        'button',
+        undefined,
+        'Help',
+        {
+          name: 'ffmpeg_helpButton',
+        }
+      );
+      ffmpeg_helpButton.size = [150, 25];
+      ffmpeg_helpButton.onClick = function() {
+        try {
+          ffmpeg_helpButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
 
       // ====================================================
 
@@ -627,7 +853,7 @@ var Settings = function(thisObj) {
       var rvCallStringHeader = rvCallStringGroup.add(
         'statictext',
         undefined,
-        'RV Custom Switches:',
+        'Custom switches',
         {
           name: 'rvCallStringHeader',
         }
@@ -643,12 +869,18 @@ var Settings = function(thisObj) {
         }
       );
       rvCallString.size = [290, 25];
-      rvCallString.onChange = rvCallString.onChanged = rvCallString_onChanged;
+      rvCallString.onChange = rvCallString.onChanged = function() {
+        try {
+          rvCallString_onChanged(this.text);
+        } catch (e) {
+          catchError(e);
+        }
+      };
 
       var rvHelpButton = rvCallStringGroup.add(
         'button',
         undefined,
-        'RV Help',
+        'Help',
         {
           name: 'rvHelpButton',
         }
@@ -841,6 +1073,42 @@ var Settings = function(thisObj) {
           'aerender_fsName',
           'aerender has not been set.'
         );
+      }
+
+      if (getSetting('ffmpeg_bin')) {
+        var ffmpeg_bin = new File(getSetting('ffmpeg_bin'));
+        if (ffmpeg_bin.exists) {
+          setUIString(
+            'ffmpeg_fsName',
+            ellipsis2(getSetting('ffmpeg_bin'))
+          );
+        } else {
+          setUIString(
+            'ffmpeg_fsName',
+            ffmpeg_bin.parent.displayName + '/' + ffmpeg_bin.displayName + ' does not exists.'
+          );
+        }
+      } else {
+        setUIString(
+          'ffmpeg_fsName',
+          'ffmpeg has not been set.'
+        );
+      }
+
+      if (getSetting('ffmpeg_call')) {
+        setUIString('ffmpeg_callString', getSetting('ffmpeg_call'));
+      }
+
+      var ffmpeg_enabled = settingsPalette.findElement('ffmpeg_enabled');
+      if (getSetting('ffmpeg_enabled')) {
+        if (getSetting('ffmpeg_enabled') === 'true') {
+          ffmpeg_enabled.value = true;
+        } else if (getSetting('ffmpeg_enabled') === 'false') {
+          ffmpeg_enabled.value;
+        }
+      } else {
+        setSetting('ffmpeg_enabled', 'true');
+        ffmpeg_enabled.value = true;
       }
 
       settingsPalette.layout.layout(true);
