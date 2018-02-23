@@ -32,6 +32,8 @@ SOFTWARE.
 var sep = (function() {
   if (File.fs === 'Windows') {
     return '\\';
+  } else {
+    return '/';
   }
 }());
 

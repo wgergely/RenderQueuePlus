@@ -75,71 +75,71 @@ function getAerenderPath(version) {
  * specific to the panel into After Effects.
  */
 var Settings = function(thisObj) {
-    var AE_RENDER_PATHS = {
-      'CC 2020': getAerenderPath('CC 2020'),
-      'CC 2019': getAerenderPath('CC 2019'),
-      'CC 2018': getAerenderPath('CC 2018'),
-      'CC 2017': getAerenderPath('CC 2017'),
-      'CC 2015.3': getAerenderPath('CC 2015.3'),
-      'CC 2015': getAerenderPath('CC 2015'),
-      'CC 2014': getAerenderPath('CC 2014'),
-      'CC': getAerenderPath('CC'),
-      'CS6': getAerenderPath('CS6'),
-    };
+  var AE_RENDER_PATHS = {
+    'CC 2020': getAerenderPath('CC 2020'),
+    'CC 2019': getAerenderPath('CC 2019'),
+    'CC 2018': getAerenderPath('CC 2018'),
+    'CC 2017': getAerenderPath('CC 2017'),
+    'CC 2015.3': getAerenderPath('CC 2015.3'),
+    'CC 2015': getAerenderPath('CC 2015'),
+    'CC 2014': getAerenderPath('CC 2014'),
+    'CC': getAerenderPath('CC'),
+    'CS6': getAerenderPath('CS6'),
+  };
 
-    var settings = {};
-    var settingsPalette;
+  var settings = {};
+  var settingsPalette;
 
-    settings.lastmodified = LAST_MODIFIED;
-    settings.version = VERSION;
-    settings.name = SCRIPT_NAME;
-    settings.author = AUTHOR;
-    settings.email = EMAIL;
-    settings.website = WEBSITE;
-    settings.description = DESCRIPTION;
-    settings.help = HELP;
-    settings.scriptname = SCRIPT_NAME;
+  settings.lastmodified = LAST_MODIFIED;
+  settings.version = VERSION;
+  settings.name = SCRIPT_NAME;
+  settings.author = AUTHOR;
+  settings.email = EMAIL;
+  settings.website = WEBSITE;
+  settings.description = DESCRIPTION;
+  settings.help = HELP;
+  settings.scriptname = SCRIPT_NAME;
 
-    settings.platform = File.fs;
-    settings.version = parseFloat(app.version);
-    settings.tempFolder = new Folder(
-      Folder.temp.fullName + '/' + settings.scriptname
-    );
-    settings.tempPath = settings.tempFolder.fsName;
+  settings.platform = File.fs;
+  settings.version = parseFloat(app.version);
+  settings.tempFolder = new Folder(
+    Folder.temp.fullName + '/' + settings.scriptname
+  );
+  settings.tempPath = settings.tempFolder.fsName;
 
-    settings.player = 'rv';
+  settings.player = 'rv';
 
-    settings.rv = {};
-    var rvHelpFile = new File(
-      scriptFile.parent.absoluteURI + '/docs/rvHelp.txt'
-    );
-    rvHelpFile.open('r');
-    settings.rv.rv_help = rvHelpFile.read();
-    rvHelpFile.close();
+  settings.rv = {};
+  var rvHelpFile = new File(
+    scriptFile.parent.absoluteURI + '/docs/rvHelp.txt'
+  );
+  rvHelpFile.open('r');
+  settings.rv.rv_help = rvHelpFile.read();
+  rvHelpFile.close();
 
-    settings.rv.rv_bin = null;
-    settings.rv.rv_call = null;
+  settings.rv.rv_bin = null;
+  settings.rv.rv_call = null;
 
-    settings.aerender = {};
-    settings.aerender.fsName = null;
-    settings.aerender.aerender_bin = null;
+  settings.aerender = {};
+  settings.aerender.fsName = null;
+  settings.aerender.aerender_bin = null;
 
-    settings.ffmpeg = {};
-    var ffmpegHelpFile = new File(
-      scriptFile.parent.absoluteURI + '/docs/ffmpegHelp.txt'
-    );
-    ffmpegHelpFile.open('r');
-    settings.ffmpeg.ffmpeg_help = ffmpegHelpFile.read();
-    ffmpegHelpFile.close();
-    settings.ffmpeg.fsName = null;
-    settings.ffmpeg.ffmpeg_enabled = null;
-    settings.ffmpeg.ffmpeg_bin = null;
-    settings.ffmpeg.ffmpeg_call = null;
+  settings.ffmpeg = {};
+  var ffmpegHelpFile = new File(
+    scriptFile.parent.absoluteURI + '/docs/ffmpegHelp.txt'
+  );
+  ffmpegHelpFile.open('r');
+  settings.ffmpeg.ffmpeg_help = ffmpegHelpFile.read();
+  ffmpegHelpFile.close();
+  settings.ffmpeg.fsName = null;
+  settings.ffmpeg.ffmpeg_enabled = null;
+  settings.ffmpeg.ffmpeg_bin = null;
+  settings.ffmpeg.ffmpeg_call = null;
 
-    settings.pathcontrol = {};
-    settings.pathcontrol.pathcontrol_help = '';
-    settings.pathcontrol.basepattern = '';
-    settings.pathcontrol.fsName = '';
+  settings.pathcontrol = {};
+  settings.pathcontrol.pathcontrol_help = '';
+  settings.pathcontrol.basepattern = '';
+  settings.pathcontrol.fsName = '';
 
   /**
    * Set rv.exe path
@@ -182,12 +182,11 @@ var Settings = function(thisObj) {
       return;
     }
 
-    var basepath = folder.fsName;
+    settings.pathcontrol.basepattern = folder.fsName;
     settings.pathcontrol.fsName = folder.fsName;
-    settings.pathcontrol.basepattern = settings.pathcontrol.fsName;
-
     setSetting('pathcontrol_fsName', settings.pathcontrol.fsName);
     setSetting('pathcontrol_basepattern', settings.pathcontrol.fsName);
+
     setUIString('pathcontrol_fsName', settings.pathcontrol.fsName);
     setUIString('pathcontrol_basepattern', settings.pathcontrol.fsName);
   }
@@ -319,31 +318,13 @@ var Settings = function(thisObj) {
   }
 
   /**
-   * Expands the input patter and sets it as a new base path.
+   * Expands the input pattern and sets it as a new base path.
+   * @param {String} text
    */
-  function pathcontrol_basepattern_onChanged() {
-    settings.pathcontrol.basepattern = this.text;
-    setSetting('pathcontrol_basepattern', this.text);
+  function pathcontrol_basepattern_onChanged(text) {
+    settings.pathcontrol.basepattern = text;
+    setSetting('pathcontrol_basepattern', settings.pathcontrol.basepattern);
     setBasebath();
-
-    var folder = new Folder(settings.pathcontrol.fsName);
-
-    if (!folder.exists) {
-      if (folder.displayName.match(/tmp0000/)) {
-        settings.pathcontrol.fsName = Folder.desktop.fsName;
-        setSetting('pathcontrol_fsName', settings.pathcontrol.fsName);
-      } else {
-        var s = '\'' + folder.fsName + '\'' + ' doesn\'t exists.\n';
-        s += 'Do you want to create it now?';
-        var prompt = confirm(
-          s,
-          'New Render Location Set'
-        );
-        if (prompt) {
-          folder.create();
-        }
-      }
-    }
   }
 
   /**
@@ -356,13 +337,45 @@ var Settings = function(thisObj) {
   };
 
   /**
-   * Sets the basepath
+   * Sets the basepath base on an input string
+   * automatically expanding any relative pointers to
+   * absolute paths
    */
   function setBasebath() {
-    var saved = true;
+    var saved;
     var folder = new Folder('/');
-    var errorString = 'Project is not saved. ';
-    errorString += 'Unable to set path relative to project location.';
+    var desktop = new Folder(Folder.desktop.fsName + sep + 'RenderQueue+');
+
+    /**
+     * Private convenience function
+     * @param {String} s string to set and display
+     */
+    function set(s) {
+      settings.pathcontrol.fsName = s;
+      setSetting('pathcontrol_fsName', s);
+      setUIString('pathcontrol_fsName', s);
+    }
+
+    // If no pattern set default to desktop
+    settings.pathcontrol.basepattern = settings.pathcontrol.basepattern.
+    replace(/^([^a-zA-Z0-9\.]{1,})/g, '');
+
+    if (settings.pathcontrol.basepattern === '') {
+      set(desktop.fsName);
+      return;
+    } else if (settings.pathcontrol.basepattern === '.') {
+      set(desktop.fsName);
+      return;
+    } else if (settings.pathcontrol.basepattern === '..') {
+      set(desktop.fsName);
+      return;
+    } else if (settings.pathcontrol.basepattern === '/') {
+      set(desktop.fsName);
+      return;
+    } else if (settings.pathcontrol.basepattern === '\\') {
+      set(desktop.fsName);
+      return;
+    }
 
     try {
       saved = app.project.file.exists;
@@ -370,54 +383,100 @@ var Settings = function(thisObj) {
       saved = false;
     }
 
-    if (settings.pathcontrol.basepattern) {
-      if (saved) {
-        if (settings.pathcontrol.basepattern.match(/^\.\.\/|^\.\.\\/gi)) {
-          settings.pathcontrol.fsName = (
-            app.project.file.parent.parent.fsName +
-            sep +
-            settings.pathcontrol.basepattern.slice(3)
-          ).replace(/\/\\/gi, sep).replace(/\/|\\/gi, sep);
-        } else {
-          if (settings.pathcontrol.basepattern.match(/^\.\/|^\.\\/gi)) {
-            settings.pathcontrol.fsName = (
-              app.project.file.parent.fsName +
-              sep +
-              settings.pathcontrol.basepattern.slice(2)
-            ).replace(/\/|\\/gi, sep);
-          } else {
-            settings.pathcontrol.fsName = (
-              settings.pathcontrol.basepattern
-            ).replace(/\/|\\/gi, sep);
-          }
-        }
-      } else {
-        if (settings.pathcontrol.basepattern.match(/^\./gi)) {
-          settings.pathcontrol.fsName = '';
-        } else {
-          settings.pathcontrol.fsName = (
-            settings.pathcontrol.basepattern
-          ).replace(/\/|\\/gi, sep);
-        }
-      }
+    var errorString = 'Project is not saved. ';
+    errorString += 'Unable to set path relative to project location.';
 
-      folder.changePath(settings.pathcontrol.fsName);
-      setSetting('pathcontrol_fsName', folder.fsName);
-
-      if (settings.pathcontrol.fsName === '') {
-        folder.changePath('');
-        settings.pathcontrol.fsName = Folder.desktop.fsName;
-        setSetting('pathcontrol_fsName', settings.pathcontrol.fsName);
-        setUIString('pathcontrol_fsName', errorString);
-      } else {
-        setUIString('pathcontrol_fsName', folder.fsName);
+    /**
+     * Private.
+     * @param  {[type]} s [description]
+     * @param  {[type]} numParents [description]
+     * @return {[type]}   [description]
+     */
+    function getAbsolutePath(s, numParents) {
+      var parent = app.project.file;
+      for (var i = 0; i < numParents; i++) {
+        if (parent.parent === null) {
+          break;
+        }
+        parent = parent.parent;
       }
-    } else {
-      folder.changePath('');
-      settings.pathcontrol.fsName = Folder.desktop.fsName;
-      setSetting('pathcontrol_fsName', settings.pathcontrol.fsName);
+      s = s.replace(/\.\//gi, '') + sep;
+      if (numParents > 0) {
+        s = parent.fsName + sep + s;
+      } else {
+        return app.project.file.parent.fsName;
+      }
+      s = s.replace(/(\\){1,}|(\/){1,}/gi, sep);
+      return s;
     }
-    settings.pathcontrol.fsName = getSetting('pathcontrol_fsName');
+
+    /**
+     * Number of parents in basepath
+     * @param  {String} s basepath
+     * @return {Number}   number of parents
+     */
+    function getNumParents(s) {
+      var numParents = 0;
+      if (/\.\//g.test(s)) {
+        numParents = s.match(/\.\//g || []).length;
+      }
+      return numParents;
+    }
+
+    /**
+     * Private convencience function to normalize a path.
+     * @param  {String} s input string
+     * @return {String}   file path
+     */
+    function getNormBasepath(s) {
+      var re0 = /\\/gi; // forward slashes
+      var re1 = /\.\.\//gi; // grandparents
+      var re2 = /\.\//gi; // parents
+      var re3 = /^[a-z0-9\s]/gi; // alpha-numberic and whitespace characters at the start
+      var re4 = /\.{2,}/gi; // multiple dots
+      // normalize path
+      s = s.
+      replace(re0, '/').
+      replace(re1, '././').
+      replace(re4, '.');
+      // if the string contains relative pointers
+      // remove any characters preceeding them
+      if (re2.test(s)) {
+        if (re3.test(s)) {
+          s = s.replace(re3, '');
+        }
+      }
+      return s;
+    }
+
+    // Set
+    if (saved) {
+      var normBasepath = getNormBasepath(settings.pathcontrol.basepattern);
+      var numParents = getNumParents(normBasepath);
+
+      if (numParents === 0) {
+        folder.changePath(settings.pathcontrol.basepattern);
+        set(folder.fsName);
+        return;
+      }
+      var absolutePath = getAbsolutePath(normBasepath, numParents);
+
+      set(absolutePath);
+      setUIString('pathcontrol_basepattern', normBasepath);
+
+      folder.changePath(absolutePath);
+      set(folder.fsName);
+      return;
+    } else {
+      folder.changePath(settings.pathcontrol.basepattern);
+      if (folder.exists) {
+        set(folder.fsName);
+        return;
+      } else {
+        set(folder.fsName);
+        return;
+      };
+    }
   };
 
   // Set Settings from Saved Preferences
@@ -511,8 +570,7 @@ var Settings = function(thisObj) {
       settingsPalette = thisObj instanceof Panel ? thisObj : new Window(
         'palette',
         settings.scriptname + ': Settings',
-        undefined,
-        {
+        undefined, {
           resizeable: false,
         }
       );
@@ -524,8 +582,7 @@ var Settings = function(thisObj) {
 
       var binGroup = settingsPalette.add(
         'group',
-        undefined,
-        {
+        undefined, {
           name: 'binGroup',
         }
       );
@@ -536,8 +593,7 @@ var Settings = function(thisObj) {
       var pathcontrolPanel = binGroup.add(
         'panel',
         undefined,
-        'Default Render Location',
-        {
+        'Default Render Location', {
           borderstyle: 'gray',
           name: 'pathcontrolPanel',
         }
@@ -546,8 +602,7 @@ var Settings = function(thisObj) {
 
       var pathcontrol_basepatternGroup = pathcontrolPanel.add(
         'group',
-        undefined,
-        {
+        undefined, {
           name: 'pathcontrol_basepatternGroup',
         }
       );
@@ -555,8 +610,7 @@ var Settings = function(thisObj) {
       var pathcontrol_basepatternHeader = pathcontrol_basepatternGroup.add(
         'statictext',
         undefined,
-        'Set output path:',
-        {
+        'Set output path:', {
           name: 'pathcontrol_basepatternHeader',
         }
       );
@@ -565,20 +619,23 @@ var Settings = function(thisObj) {
       var pathcontrol_basepattern = pathcontrol_basepatternGroup.add(
         'edittext',
         undefined,
-        '',
-        {
+        '', {
           name: 'pathcontrol_basepattern',
         }
       );
       pathcontrol_basepattern.size = [290, 25];
-      pathcontrol_basepattern.onChange = pathcontrol_basepattern_onChanged;
-      pathcontrol_basepattern.onChanged = pathcontrol_basepattern_onChanged;
+      pathcontrol_basepattern.onChange = pathcontrol_basepattern.onChanging = function() {
+        try {
+          pathcontrol_basepattern_onChanged(this.text);
+        } catch (e) {
+          catchError(e);
+        }
+      };
 
       var pathcontrolBrowseButton = pathcontrol_basepatternGroup.add(
         'button',
         undefined,
-        'Reveal',
-        {
+        'Reveal', {
           name: 'pathcontrolExploreButton',
         }
       );
@@ -594,8 +651,7 @@ var Settings = function(thisObj) {
       var pathcontrolHelpButton = pathcontrol_basepatternGroup.add(
         'button',
         undefined,
-        'Pick',
-        {
+        'Pick', {
           name: 'pathcontrolPickButton',
         }
       );
@@ -610,8 +666,7 @@ var Settings = function(thisObj) {
 
       var pathcontrolResultGroup = pathcontrolPanel.add(
         'group',
-        undefined,
-        {
+        undefined, {
           name: 'pathcontrol_basepatternGroup',
         }
       );
@@ -619,8 +674,7 @@ var Settings = function(thisObj) {
       var pathcontrol_fsNameLabel = pathcontrolResultGroup.add(
         'statictext',
         undefined,
-        'To set a path relative to the active project you can use\n./  or  ../',
-        {
+        'To set a path relative to the active project you can use\n./  or  ../', {
           name: 'pathcontrol_fsNameLabel',
           multiline: true,
         }
@@ -630,8 +684,7 @@ var Settings = function(thisObj) {
       var pathcontrol_fsName = pathcontrolResultGroup.add(
         'statictext',
         undefined,
-        'No pattern has been set.',
-        {
+        'No pattern has been set.', {
           name: 'pathcontrol_fsName',
         }
       );
@@ -642,8 +695,7 @@ var Settings = function(thisObj) {
       var aerenderPanel = binGroup.add(
         'panel',
         undefined,
-        'Aerender.exe',
-        {
+        'Aerender.exe', {
           borderstyle: 'gray',
           name: 'aerenderPanel',
         }
@@ -652,8 +704,7 @@ var Settings = function(thisObj) {
 
       var aerender_pathGroup = aerenderPanel.add(
         'group',
-        undefined,
-        {
+        undefined, {
           name: 'aerender_basepatternGroup',
         }
       );
@@ -661,8 +712,7 @@ var Settings = function(thisObj) {
       var aerender_fsName = aerender_pathGroup.add(
         'statictext',
         undefined,
-        '-',
-        {
+        '-', {
           name: 'aerender_fsName',
         }
       );
@@ -671,8 +721,7 @@ var Settings = function(thisObj) {
       var aerenderBrowseButton = aerender_pathGroup.add(
         'button',
         undefined,
-        'Reveal',
-        {
+        'Reveal', {
           name: 'aerenderExploreButton',
         }
       );
@@ -688,8 +737,7 @@ var Settings = function(thisObj) {
       var aerenderPickButton = aerender_pathGroup.add(
         'button',
         undefined,
-        'Pick',
-        {
+        'Pick', {
           name: 'aerenderPickButton',
         }
       );
@@ -707,8 +755,7 @@ var Settings = function(thisObj) {
       var ffmpegPanel = binGroup.add(
         'panel',
         undefined,
-        'FFmpeg',
-        {
+        'FFmpeg', {
           borderstyle: 'gray',
           name: 'ffmpegPanel',
         }
@@ -717,8 +764,7 @@ var Settings = function(thisObj) {
 
       var ffmpeg_pathGroup = ffmpegPanel.add(
         'group',
-        undefined,
-        {
+        undefined, {
           name: 'ffmpeg_pathGroup',
         }
       );
@@ -726,8 +772,7 @@ var Settings = function(thisObj) {
       var ffmpeg_fsName = ffmpeg_pathGroup.add(
         'statictext',
         undefined,
-        '-',
-        {
+        '-', {
           name: 'ffmpeg_fsName',
         }
       );
@@ -736,8 +781,7 @@ var Settings = function(thisObj) {
       var ffmpegBrowseButton = ffmpeg_pathGroup.add(
         'button',
         undefined,
-        'Reveal',
-        {
+        'Reveal', {
           name: 'ffmpegExploreButton',
         }
       );
@@ -753,8 +797,7 @@ var Settings = function(thisObj) {
       var ffmpegPickButton = ffmpeg_pathGroup.add(
         'button',
         undefined,
-        'Pick',
-        {
+        'Pick', {
           name: 'ffmpegPickButton',
         }
       );
@@ -769,8 +812,7 @@ var Settings = function(thisObj) {
 
       var ffmpeg_createGroup = ffmpegPanel.add(
         'group',
-        undefined,
-        {
+        undefined, {
           name: 'ffmpeg_createGroup',
         }
       );
@@ -780,8 +822,7 @@ var Settings = function(thisObj) {
       var ffmpeg_enabled = ffmpeg_createGroup.add(
         'checkbox',
         undefined,
-        'Create QuickTime',
-        {
+        'Create QuickTime', {
           name: 'ffmpeg_enabled',
         }
       );
@@ -797,8 +838,7 @@ var Settings = function(thisObj) {
       var ffmpeg_callString = ffmpeg_createGroup.add(
         'edittext',
         undefined,
-        '-vcodec libx264 -crf 12 -pix_fmt yuv420p',
-        {
+        '-vcodec libx264 -crf 12 -pix_fmt yuv420p', {
           name: 'ffmpeg_callString',
         }
       );
@@ -814,8 +854,7 @@ var Settings = function(thisObj) {
       var ffmpeg_helpButton = ffmpeg_createGroup.add(
         'button',
         undefined,
-        'Help',
-        {
+        'Help', {
           name: 'ffmpeg_helpButton',
         }
       );
@@ -833,8 +872,7 @@ var Settings = function(thisObj) {
       var rvPanel = binGroup.add(
         'panel',
         undefined,
-        'RV',
-        {
+        'RV', {
           borderStyle: 'gray',
           name: 'rvPanel',
         }
@@ -843,8 +881,7 @@ var Settings = function(thisObj) {
 
       var rvCallStringGroup = rvPanel.add(
         'group',
-        undefined,
-        {
+        undefined, {
           name: 'rvCallStringGroup',
         }
       );
@@ -853,8 +890,7 @@ var Settings = function(thisObj) {
       var rvCallStringHeader = rvCallStringGroup.add(
         'statictext',
         undefined,
-        'Custom switches',
-        {
+        'Custom switches', {
           name: 'rvCallStringHeader',
         }
       );
@@ -863,8 +899,7 @@ var Settings = function(thisObj) {
       var rvCallString = rvCallStringGroup.add(
         'edittext',
         undefined,
-        '',
-        {
+        '', {
           name: 'rvCallString',
         }
       );
@@ -880,8 +915,7 @@ var Settings = function(thisObj) {
       var rvHelpButton = rvCallStringGroup.add(
         'button',
         undefined,
-        'Help',
-        {
+        'Help', {
           name: 'rvHelpButton',
         }
       );
@@ -896,8 +930,7 @@ var Settings = function(thisObj) {
 
       var rvGroup = rvPanel.add(
         'group',
-        undefined,
-        {
+        undefined, {
           name: 'rvGroup',
         }
       );
@@ -906,8 +939,7 @@ var Settings = function(thisObj) {
       var pickRVButton = rvGroup.add(
         'button',
         undefined,
-        'Set RV Path',
-        {
+        'Set RV Path', {
           name: 'pickRVButton',
         }
       );
@@ -923,15 +955,13 @@ var Settings = function(thisObj) {
       var rvPickString = rvGroup.add(
         'statictext',
         undefined,
-        'path not set',
-        {
+        'path not set', {
           name: 'rvPickString',
         }
       );
       rvPickString.enabled = false;
       rvPickString.graphics.foregroundColor = rvPickString.graphics.newPen(
-        settingsPalette.graphics.PenType.SOLID_COLOR,
-        [0.7, 0.7, 0.7],
+        settingsPalette.graphics.PenType.SOLID_COLOR, [0.7, 0.7, 0.7],
         1
       );
       rvPickString.alignment = 'right';
@@ -941,8 +971,7 @@ var Settings = function(thisObj) {
       var aboutPanel = binGroup.add(
         'panel',
         undefined,
-        'About',
-        {
+        'About', {
           borderStyle: 'gray',
           name: 'aboutPanel',
         }
@@ -951,24 +980,24 @@ var Settings = function(thisObj) {
 
       var aboutGroup1 = aboutPanel.add(
         'group',
-        undefined,
-        {
+        undefined, {
           name: 'aboutGroup1',
         }
       );
 
       var info = aboutGroup1.add('statictext', undefined,
-      'Version: ' + VERSION + '\n' +
-      'Author: ' + AUTHOR + '\n' +
-      'Email: ' + EMAIL + '\n',
-      {name: 'aboutVersion', multiline: true});
+        'Version: ' + VERSION + '\n' +
+        'Author: ' + AUTHOR + '\n' +
+        'Email: ' + EMAIL + '\n', {
+          name: 'aboutVersion',
+          multiline: true,
+        });
       info.size = [440, 50];
 
       var aboutWebsite = aboutGroup1.add(
         'button',
         undefined,
-        'Website',
-        {
+        'Website', {
           name: 'aboutWebsite',
         }
       );
@@ -980,8 +1009,7 @@ var Settings = function(thisObj) {
       var aboutReadme = aboutGroup1.add(
         'button',
         undefined,
-        'About / Help',
-        {
+        'About / Help', {
           name: 'aboutReadme',
         }
       );
@@ -990,26 +1018,26 @@ var Settings = function(thisObj) {
         openLink('http://gergely-wootsch.com');
       };
 
-      // settings.lastmodified = LAST_MODIFIED;
-      // settings.version = VERSION;
-      // settings.name = SCRIPT_NAME;
-      // settings.author = AUTHOR;
-      // settings.email = EMAIL;
-      // settings.website = WEBSITE;
-      // settings.description = DESCRIPTION;
-      // settings.help = HELP;
-      // settings.scriptname = SCRIPT_NAME;
-      // ====================================================
-
       var closeBtn = settingsPalette.add(
         'button',
         undefined,
-        'Close',
-        {
+        'Close', {
           name: 'ok',
         }
       );
       closeBtn.onClick = function() {
+        var folder = new Folder(getSetting('pathcontrol_fsName'));
+        if (!folder.exists) {
+          var s = '\'' + folder.fsName + '\'' + ' doesn\'t exists.\n';
+          s += 'Do you want to create it now?';
+          var prompt = confirm(
+            s,
+            'New Render Location Set'
+          );
+          if (prompt) {
+            folder.create();
+          }
+        }
         settingsPalette.hide();
       };
     }(cls);
@@ -1034,17 +1062,10 @@ var Settings = function(thisObj) {
         setUIString('rvCallString', getSetting('rv_call'));
       }
 
-      if (!(getSetting('pathcontrol_basepattern') === '')) {
-        setUIString(
-          'pathcontrol_basepattern',
-          getSetting('pathcontrol_basepattern')
-        );
-      } else {
-        setUIString(
-          'pathcontrol_basepattern',
-          ''
-        );
-      }
+      setUIString(
+        'pathcontrol_basepattern',
+        getSetting('pathcontrol_basepattern')
+      );
 
       if (!(getSetting('pathcontrol_fsName') === '')) {
         setUIString(
