@@ -107,9 +107,32 @@ var Data = function() {
 
     dataObj.padding = getPadding(omItem.file.name);
 
+    if (dataObj.isSequence && (dataObj.padding === null)) {
+      Window.alert(
+        dataObj.displayName + ' is a sequence but the output name has no padding.\n' +
+        'Check your output path.',
+        SCRIPT_NAME
+      );
+    }
+
+    if ((dataObj.isSequence === false) && (dataObj.padding > 0)) {
+      Window.alert(
+        dataObj.displayName + ' is not a sequence but the output name has padding.\n' +
+        'Check your output path.',
+        SCRIPT_NAME
+      );
+    }
+
     dataObj.basepath = omItem.file.parent.fsName;
 
-    dataObj.ext = omItem.file.name.slice(-3);
+
+    var re = /(\.)([a-zA-Z]{1,})$/i;
+    if (re.test(omItem.file.name)) {
+      dataObj.ext = omItem.file.name.match(re)[2];
+    } else {
+      dataObj.ext = '';
+    }
+
     if (!dataObj.padding) {
       dataObj.basename = omItem.file.displayName.slice(
         0, (dataObj.ext.length + 1 * (-1))
@@ -149,57 +172,55 @@ var Data = function() {
     }
 
     // Error
-    if (
-      files.hasOwnProperty('Invalid path.') ||
-      files.hasOwnProperty('Error.')
-    ) {
-      dataObj.exists = {
-        frames: '-',
-        names: [],
-        fsNames: [],
-        size: formatBytes(0, 2),
-        sizes: [formatBytes(0, 2)],
-        dates: [],
-        count: 0,
-      };
-
-      dataObj.rendered = {
-        frames: '-',
-        names: [],
-        fsNames: [],
-        size: formatBytes(0, 2),
-        sizes: [formatBytes(0, 2)],
-        dates: [],
-        count: 0,
-      };
-
-      dataObj.missing = {
-        frames: '-',
-        names: [],
-        fsNames: [],
-        size: formatBytes(0, 2),
-        sizes: [formatBytes(0, 2)],
-        dates: [],
-        count: 0,
-      };
-
-      dataObj.incomplete = {
-        frames: '-',
-        names: [],
-        fsNames: [],
-        size: formatBytes(0, 2),
-        sizes: [formatBytes(0, 2)],
-        dates: [],
-        count: 0,
-      };
-
-      return dataObj;
-    } // error
+    // if (
+    //   files.hasOwnProperty('Invalid path.') ||
+    //   files.hasOwnProperty('Error.')
+    // ) {
+    //   dataObj.exists = {
+    //     frames: '-',
+    //     names: [],
+    //     fsNames: [],
+    //     size: formatBytes(0, 2),
+    //     sizes: [formatBytes(0, 2)],
+    //     dates: [],
+    //     count: 0,
+    //   };
+    //
+    //   dataObj.rendered = {
+    //     frames: '-',
+    //     names: [],
+    //     fsNames: [],
+    //     size: formatBytes(0, 2),
+    //     sizes: [formatBytes(0, 2)],
+    //     dates: [],
+    //     count: 0,
+    //   };
+    //
+    //   dataObj.missing = {
+    //     frames: '-',
+    //     names: [],
+    //     fsNames: [],
+    //     size: formatBytes(0, 2),
+    //     sizes: [formatBytes(0, 2)],
+    //     dates: [],
+    //     count: 0,
+    //   };
+    //
+    //   dataObj.incomplete = {
+    //     frames: '-',
+    //     names: [],
+    //     fsNames: [],
+    //     size: formatBytes(0, 2),
+    //     sizes: [formatBytes(0, 2)],
+    //     dates: [],
+    //     count: 0,
+    //   };
+    //
+    //   return dataObj;
+    // } // error
 
     var frame;
-    var name = (
-      decodeURI(omItem.file.name).slice(0, (dataObj.padding + 2 + 4) * (-1))
-    );
+    var name = '';
     var fname = '';
     var fsName;
 
@@ -230,6 +251,16 @@ var Data = function() {
 
     // Image sequence
     if (dataObj.padding > 0) {
+      name = (
+        decodeURI(omItem.file.name).slice(
+          0,
+          (
+            dataObj.padding +
+            '[]'.length +
+            dataObj.ext.length + 1
+          ) * (-1)
+        )
+      );
       var progressbar = new PBar(dataObj.duration + dataObj.startframe);
       var n = 100;
       progressbar.show();
@@ -290,6 +321,7 @@ var Data = function() {
         dates: notmissingDates,
         count: notmissingFrames.length,
       };
+
       dataObj.rendered = {
         frames: getRanges(existsFrames),
         names: existsNames,
@@ -320,17 +352,22 @@ var Data = function() {
       };
     // Movies
     } else {
+      name = (
+        decodeURI(omItem.file.name).slice(
+          0,
+          dataObj.ext.length * (-1)
+        )
+      );
+
       frame = 1;
       fname = decodeURI(omItem.file.name);
-      fsName = omItem.file.parent.fsName + sep + name;
-
+      fsName = omItem.file.parent.fsName + sep + fname;
       if (files.hasOwnProperty(fname)) {
-        notmissingNames.push(name);
+        notmissingNames.push(fname);
         notmissingFrames.push(frame);
         notmissingfsNames.push(fsName);
         notmissingSizes.push(formatBytes(files[fname].size, 2));
         notmissingDates.push(files[fname].date + ' ' + files[fname].time);
-
         if (files[fname].size > 50) {
           existsNames.push(fname);
           existsFrames.push(frame);
@@ -354,7 +391,7 @@ var Data = function() {
       formattedSize = formatBytes(size, 2);
       dataObj.exists = {
         frames: 1,
-        names: [files.items[0].name],
+        names: notmissingNames,
         fsNames: notmissingfsNames,
         size: formattedSize,
         sizes: notmissingSizes,
@@ -396,7 +433,6 @@ var Data = function() {
   }
 
   var cls = function() {
-    var cls = this;
     this.getOutputModule = function(rqIndex, omIndex) {
       var rqItem;
       var omItem;
@@ -428,6 +464,7 @@ var Data = function() {
       * @return {object} dataObj
       */
       function setDataObj(i, j) {
+        var ffmpeg;
         var rqItem = app.project.renderQueue.item(i);
         var omItem = rqItem.outputModule(j);
 
@@ -466,6 +503,15 @@ var Data = function() {
           } else {
             return null;
           };
+        }();
+
+        dataObj.isSequence = function() {
+          if (dataObj.file) {
+            ffmpeg = new FFMPEG();
+            return ffmpeg.isSequence(omItem.file.fsName);
+          } else {
+            return null;
+          }
         }();
 
         dataObj.displayName = null;
@@ -546,6 +592,14 @@ var Data = function() {
           ++k;
         }
       }
+    };
+
+    this.count = function() {
+      var keys = [];
+      for (var key in DATA) {
+        keys.push(key);
+      };
+      return keys.length;
     };
 
     this.item = function(index) {

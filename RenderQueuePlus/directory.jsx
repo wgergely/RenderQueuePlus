@@ -97,7 +97,7 @@ var Directory = function(inPath) {
 
       if (File.fs === 'Windows') {
         var tempOutput = new File(
-          Folder.temp.fsName + sep + 'RenderQueueTempOutput'
+          TEMP_DIR.absoluteURI + '/renderQueuePlus_dirOutput'
         );
 
         cmd = 'cmd /c "' +

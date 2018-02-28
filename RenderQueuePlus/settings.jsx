@@ -102,16 +102,10 @@ var Settings = function(thisObj) {
 
   settings.platform = File.fs;
   settings.version = parseFloat(app.version);
-  settings.tempFolder = new Folder(
-    Folder.temp.fullName + '/' + settings.scriptname
-  );
-  settings.tempPath = settings.tempFolder.fsName;
-
-  settings.player = 'rv';
 
   settings.rv = {};
   var rvHelpFile = new File(
-    scriptFile.parent.absoluteURI + '/docs/rvHelp.txt'
+    SCRIPT_FILE.parent.absoluteURI + '/RenderQueuePlus/docs/rvHelp.txt'
   );
   rvHelpFile.open('r');
   settings.rv.rv_help = rvHelpFile.read();
@@ -126,7 +120,7 @@ var Settings = function(thisObj) {
 
   settings.ffmpeg = {};
   var ffmpegHelpFile = new File(
-    scriptFile.parent.absoluteURI + '/docs/ffmpegHelp.txt'
+    SCRIPT_FILE.parent.absoluteURI + '/RenderQueuePlus/docs/ffmpegHelp.txt'
   );
   ffmpegHelpFile.open('r');
   settings.ffmpeg.ffmpeg_help = ffmpegHelpFile.read();
@@ -344,7 +338,7 @@ var Settings = function(thisObj) {
   function setBasebath() {
     var saved;
     var folder = new Folder('/');
-    var desktop = new Folder(Folder.desktop.fsName + sep + 'RenderQueue+');
+    var desktop = new Folder(Folder.desktop.absoluteURI + '/' + SCRIPT_NAME);
 
     /**
      * Private convenience function
@@ -479,92 +473,179 @@ var Settings = function(thisObj) {
     }
   };
 
-  // Set Settings from Saved Preferences
-  settings.init = function() {
-    settings.player = getSetting('player');
-
-    settings.rv.rv_bin = getSetting('rv_bin');
-    settings.rv.rv_call = getSetting('rv_call');
-    if (!settings.rv.rv_call) {
-      settings.rv.rv_call = '';
-      setSetting('rv_call', '');
-    }
-
-    settings.aerender.aerender_bin = function() {
-      var aerender = new File('/');
-
-      if (getSetting('aerender_bin')) {
-        aerender.changePath(getSetting('aerender_bin'));
-        if (aerender.exists) {
-          setSetting('aerender_bin', aerender.fsName);
-          return;
-        }
-      }
-
-      var version = parseFloat(app.version);
-      var string;
-
-      if (version >= 16 && version < 16.5) {
-        aerender.changePath(AE_RENDER_PATHS['CC 2020']);
-      } else if (version >= 15.5 && version < 16) {
-        aerender.changePath(AE_RENDER_PATHS['CC 2019']);
-      } else if (version >= 15 && version < 15.5) {
-        aerender.changePath(AE_RENDER_PATHS['CC 2018']);
-      } else if (version >= 14 && version < 14.3) {
-        aerender.changePath(AE_RENDER_PATHS['CC 2017']);
-      } else if (version >= 13.8 && version < 14) {
-        aerender.changePath(AE_RENDER_PATHS['CC 2015.3']);
-      } else if (version >= 13.5 && version < 13.8) {
-        aerender.changePath(AE_RENDER_PATHS['CC 2015']);
-      } else if (version >= 13 && version < 13.5) {
-        aerender.changePath(AE_RENDER_PATHS['CC 2014']);
-      } else if (version >= 12 && version < 12.3) {
-        aerender.changePath(AE_RENDER_PATHS['CC']);
-      } else if (version >= 11 && version < 11.1) {
-        aerender.changePath(AE_RENDER_PATHS['CS6']);
-      };
-
-      if (aerender.exists) {
-        string = aerender.fsName;
-      } else {
-        var text = 'Aerender.exe could not be located.\n';
-        text += 'Do you want to manually select it?';
-
-        var prompt = confirm(
-          text,
-          'Where is aerender.exe?'
-        );
-
-        if (prompt) {
-          aerender = aerender.openDlg(
-            'Select the location of aerender.exe',
-            'aerender.exe:aerender.exe'
-          );
-
-          if (aerender) {
-            string = aerender.fsName;
-          } else {
-            string = null;
-          };
-        } else {
-          string = null;
-        }
-      }
-
-      setSetting('aerender_bin', string);
-      return string;
-    }();
-
-    settings.pathcontrol.basepattern = getSetting('pathcontrol_basepattern');
-    if (!settings.pathcontrol.basepattern) {
-      settings.pathcontrol.basepattern = '';
-      setSetting('pathcontrol_basepattern', '');
-    }
-    settings.pathcontrol.fsName = getSetting('pathcontrol_fsName');
-  }();
 
   var cls = function() {
     var cls = this;
+
+    // Set Settings from Saved Preferences
+    this.init = function() {
+      if (!getSetting('rv_bin')) {
+        setUIString('rvPickString', 'Path not set.');
+      } else {
+        setUIString(
+          'rvPickString',
+          '\'' + getSetting('rv_bin') + '\''
+        );
+      }
+
+      if (!getSetting('rv_call')) {
+        setUIString('rvCallString', '');
+      } else {
+        setUIString('rvCallString', getSetting('rv_call'));
+      }
+
+      setUIString(
+        'pathcontrol_basepattern',
+        getSetting('pathcontrol_basepattern')
+      );
+
+      if (!(getSetting('pathcontrol_fsName') === '')) {
+        setUIString(
+          'pathcontrol_fsName',
+          ellipsis2(getSetting('pathcontrol_fsName'))
+        );
+      } else {
+        setUIString('pathcontrol_fsName', 'No pattern has been set.');
+      }
+
+      if (getSetting('aerender_bin')) {
+        var aerender_bin = new File(getSetting('aerender_bin'));
+        if (aerender_bin.exists) {
+          setUIString(
+            'aerender_fsName',
+            ellipsis2(getSetting('aerender_bin'))
+          );
+        } else {
+          setUIString(
+            'aerender_fsName',
+            aerender_bin.parent.displayName + '/' + aerender_bin.displayName + ' does not exists.'
+          );
+        }
+      } else {
+        setUIString(
+          'aerender_fsName',
+          'aerender has not been set.'
+        );
+      }
+
+      if (getSetting('ffmpeg_bin')) {
+        var ffmpeg_bin = new File(getSetting('ffmpeg_bin'));
+        if (ffmpeg_bin.exists) {
+          setUIString(
+            'ffmpeg_fsName',
+            ellipsis2(getSetting('ffmpeg_bin'))
+          );
+        } else {
+          setUIString(
+            'ffmpeg_fsName',
+            ffmpeg_bin.parent.displayName + '/' + ffmpeg_bin.displayName + ' does not exists.'
+          );
+        }
+      } else {
+        setUIString(
+          'ffmpeg_fsName',
+          'ffmpeg has not been set.'
+        );
+      }
+
+      if (!getSetting('ffmpeg_call')) {
+        settings.ffmpeg.ffmpeg_call = settingsPalette.findElement('ffmpeg_callString').text;
+        setSetting('ffmpeg_call', settingsPalette.findElement('ffmpeg_callString').text);
+      } else {
+        setUIString('ffmpeg_callString', getSetting('ffmpeg_call'));
+      }
+
+      var ffmpeg_enabled = settingsPalette.findElement('ffmpeg_enabled');
+      if (getSetting('ffmpeg_enabled')) {
+        if (getSetting('ffmpeg_enabled') === 'true') {
+          ffmpeg_enabled.value = true;
+        } else if (getSetting('ffmpeg_enabled') === 'false') {
+          ffmpeg_enabled.value = false;
+        }
+      } else {
+        setSetting('ffmpeg_enabled', 'true');
+        ffmpeg_enabled.value = true;
+      }
+
+      settings.rv.rv_bin = getSetting('rv_bin');
+      settings.rv.rv_call = getSetting('rv_call');
+      if (!settings.rv.rv_call) {
+        settings.rv.rv_call = '';
+        setSetting('rv_call', '');
+      }
+
+      settings.aerender.aerender_bin = function() {
+        var aerender = new File('/');
+
+        if (getSetting('aerender_bin')) {
+          aerender.changePath(getSetting('aerender_bin'));
+          if (aerender.exists) {
+            setSetting('aerender_bin', aerender.fsName);
+            return;
+          }
+        }
+
+        var version = parseFloat(app.version);
+        var string;
+
+        if (version >= 16 && version < 16.5) {
+          aerender.changePath(AE_RENDER_PATHS['CC 2020']);
+        } else if (version >= 15.5 && version < 16) {
+          aerender.changePath(AE_RENDER_PATHS['CC 2019']);
+        } else if (version >= 15 && version < 15.5) {
+          aerender.changePath(AE_RENDER_PATHS['CC 2018']);
+        } else if (version >= 14 && version < 14.3) {
+          aerender.changePath(AE_RENDER_PATHS['CC 2017']);
+        } else if (version >= 13.8 && version < 14) {
+          aerender.changePath(AE_RENDER_PATHS['CC 2015.3']);
+        } else if (version >= 13.5 && version < 13.8) {
+          aerender.changePath(AE_RENDER_PATHS['CC 2015']);
+        } else if (version >= 13 && version < 13.5) {
+          aerender.changePath(AE_RENDER_PATHS['CC 2014']);
+        } else if (version >= 12 && version < 12.3) {
+          aerender.changePath(AE_RENDER_PATHS['CC']);
+        } else if (version >= 11 && version < 11.1) {
+          aerender.changePath(AE_RENDER_PATHS['CS6']);
+        };
+
+        if (aerender.exists) {
+          string = aerender.fsName;
+        } else {
+          var text = 'Aerender.exe could not be located.\n';
+          text += 'Do you want to manually select it?';
+
+          var prompt = confirm(
+            text,
+            'Where is aerender.exe?'
+          );
+
+          if (prompt) {
+            aerender = aerender.openDlg(
+              'Select the location of aerender.exe',
+              'aerender.exe:aerender.exe'
+            );
+
+            if (aerender) {
+              string = aerender.fsName;
+            } else {
+              string = null;
+            };
+          } else {
+            string = null;
+          }
+        }
+
+        setSetting('aerender_bin', string);
+        return string;
+      }();
+
+      settings.pathcontrol.basepattern = getSetting('pathcontrol_basepattern');
+      if (!settings.pathcontrol.basepattern) {
+        settings.pathcontrol.basepattern = '';
+        setSetting('pathcontrol_basepattern', '');
+      }
+      settings.pathcontrol.fsName = getSetting('pathcontrol_fsName');
+    };
 
     this.createUI = function(cls) {
       settingsPalette = thisObj instanceof Panel ? thisObj : new Window(
@@ -838,7 +919,8 @@ var Settings = function(thisObj) {
       var ffmpeg_callString = ffmpeg_createGroup.add(
         'edittext',
         undefined,
-        '-vcodec libx264 -crf 12 -pix_fmt yuv420p', {
+        '-an -vcodec libx264 -crf 12 -pix_fmt yuv420p -movflags +faststart -profile:v baseline -level 3',
+        {
           name: 'ffmpeg_callString',
         }
       );
@@ -966,6 +1048,7 @@ var Settings = function(thisObj) {
       );
       rvPickString.alignment = 'right';
       rvPickString.size = [450, 25];
+
       // ====================================================
 
       var aboutPanel = binGroup.add(
@@ -985,6 +1068,12 @@ var Settings = function(thisObj) {
         }
       );
 
+      var logo = aboutGroup1.add(
+        'image',
+        undefined,
+        ICON_FILES.logoSm
+      );
+
       var info = aboutGroup1.add('statictext', undefined,
         'Version: ' + VERSION + '\n' +
         'Author: ' + AUTHOR + '\n' +
@@ -992,7 +1081,7 @@ var Settings = function(thisObj) {
           name: 'aboutVersion',
           multiline: true,
         });
-      info.size = [440, 50];
+      info.size = [291, 50];
 
       var aboutWebsite = aboutGroup1.add(
         'button',
@@ -1003,19 +1092,38 @@ var Settings = function(thisObj) {
       );
       aboutWebsite.size = [75, 15];
       aboutWebsite.onClick = function() {
-        openLink('http://gergely-wootsch.com');
+        openLink('http://gergely-wootsch.com/renderqueueplus');
+      };
+
+      var setLicence = aboutGroup1.add(
+        'button',
+        undefined,
+        'Licence', {
+          name: 'aboutWebsite',
+        }
+      );
+      setLicence.size = [75, 15];
+      setLicence.onClick = function() {
+        try {
+          var llic = new LOCAL_LICENCE();
+          var licensee = llic.read();
+          var licence_win = new ENTER_LICENCE();
+          licence_win.show(licensee);
+        } catch (e) {
+          catchError(e);
+        };
       };
 
       var aboutReadme = aboutGroup1.add(
         'button',
         undefined,
-        'About / Help', {
+        'Contact', {
           name: 'aboutReadme',
         }
       );
       aboutReadme.size = [75, 15];
       aboutReadme.onClick = function() {
-        openLink('http://gergely-wootsch.com');
+        openLink('mailto:hello@gergely-wootsch.com');
       };
 
       var closeBtn = settingsPalette.add(
@@ -1025,6 +1133,7 @@ var Settings = function(thisObj) {
           name: 'ok',
         }
       );
+
       closeBtn.onClick = function() {
         var folder = new Folder(getSetting('pathcontrol_fsName'));
         if (!folder.exists) {
@@ -1043,94 +1152,7 @@ var Settings = function(thisObj) {
     }(cls);
 
     this.show = function() {
-      if (settings.player == 'rv') {
-        settingsPalette.findElement('rvPanel').enabled = true;
-      }
-
-      if (!getSetting('rv_bin')) {
-        setUIString('rvPickString', 'Path not set.');
-      } else {
-        setUIString(
-          'rvPickString',
-          '\'' + getSetting('rv_bin') + '\''
-        );
-      }
-
-      if (!getSetting('rv_call')) {
-        setUIString('rvCallString', '');
-      } else {
-        setUIString('rvCallString', getSetting('rv_call'));
-      }
-
-      setUIString(
-        'pathcontrol_basepattern',
-        getSetting('pathcontrol_basepattern')
-      );
-
-      if (!(getSetting('pathcontrol_fsName') === '')) {
-        setUIString(
-          'pathcontrol_fsName',
-          ellipsis2(getSetting('pathcontrol_fsName'))
-        );
-      } else {
-        setUIString('pathcontrol_fsName', 'No pattern has been set.');
-      }
-
-      if (getSetting('aerender_bin')) {
-        var aerender_bin = new File(getSetting('aerender_bin'));
-        if (aerender_bin.exists) {
-          setUIString(
-            'aerender_fsName',
-            ellipsis2(getSetting('aerender_bin'))
-          );
-        } else {
-          setUIString(
-            'aerender_fsName',
-            aerender_bin.parent.displayName + '/' + aerender_bin.displayName + ' does not exists.'
-          );
-        }
-      } else {
-        setUIString(
-          'aerender_fsName',
-          'aerender has not been set.'
-        );
-      }
-
-      if (getSetting('ffmpeg_bin')) {
-        var ffmpeg_bin = new File(getSetting('ffmpeg_bin'));
-        if (ffmpeg_bin.exists) {
-          setUIString(
-            'ffmpeg_fsName',
-            ellipsis2(getSetting('ffmpeg_bin'))
-          );
-        } else {
-          setUIString(
-            'ffmpeg_fsName',
-            ffmpeg_bin.parent.displayName + '/' + ffmpeg_bin.displayName + ' does not exists.'
-          );
-        }
-      } else {
-        setUIString(
-          'ffmpeg_fsName',
-          'ffmpeg has not been set.'
-        );
-      }
-
-      if (getSetting('ffmpeg_call')) {
-        setUIString('ffmpeg_callString', getSetting('ffmpeg_call'));
-      }
-
-      var ffmpeg_enabled = settingsPalette.findElement('ffmpeg_enabled');
-      if (getSetting('ffmpeg_enabled')) {
-        if (getSetting('ffmpeg_enabled') === 'true') {
-          ffmpeg_enabled.value = true;
-        } else if (getSetting('ffmpeg_enabled') === 'false') {
-          ffmpeg_enabled.value;
-        }
-      } else {
-        setSetting('ffmpeg_enabled', 'true');
-        ffmpeg_enabled.value = true;
-      }
+      cls.init();
 
       settingsPalette.layout.layout(true);
       settingsPalette.layout.resize();
@@ -1143,23 +1165,7 @@ var Settings = function(thisObj) {
       setBasebath();
     };
 
-    this.tempFolder = function() {
-      settings.tempFolder.create();
-      return settings.tempFolder;
-    }();
-
-    this.platform = function() {
-      return settings.platform;
-    }();
-
-    this.version = function() {
-      return settings.version;
-    }();
-
-    this.scriptname = function() {
-      return settings.scriptname;
-    }();
-
+    this.init();
     this.setbasepath();
   };
   return cls;

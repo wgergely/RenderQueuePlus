@@ -34,6 +34,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
   var browseButton;
   var framesButton;
   var restoreButton;
+  var makeMovieButton;
   var versionsIncrement;
   var versionsReset;
   var versionsDropdown;
@@ -167,27 +168,6 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       browseButton.enabled = false;
       browseButton.helpTip = 'Reveal render output';
 
-      restoreButton = controlsGroup1.add(
-        'iconbutton',
-        undefined,
-        ICON_FILES.restoreComp2,
-        {
-          name: 'restoreButton',
-          style: 'toolbutton',
-          toggle: false,
-        }
-      );
-      restoreButton.onClick = function() {
-        try {
-          restoreButton_onClick();
-        } catch (e) {
-          catchError(e);
-        }
-      };
-      restoreButton.size = [elemSize, elemSize];
-      restoreButton.enabled = false;
-      restoreButton.helpTip = 'Restore the project used to render the current version';
-
       framesButton = controlsGroup1.add(
         'iconbutton',
         undefined,
@@ -272,12 +252,11 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       UIsep.enabled = false;
 
 
-      var controlsGroup2 = controlsGroup.add('group', [0, 0, 0, 0], {
+      var controlsGroup2 = controlsGroup.add('group', undefined, {
         name: 'controlsGroup2',
       });
       controlsGroup2.spacing = 5;
       controlsGroup2.alignment = ['right', 'top'];
-      // controlsGroup2.preferredSize = [300, ''];
 
       controlsGroup2.add(
         'statictext',
@@ -306,7 +285,6 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           catchError(e);
         }
       };
-
 
       versionsIncrement = controlsGroup2.add(
         'iconbutton',
@@ -371,6 +349,47 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       importButton.alignment = 'left';
       importButton.enabled = false;
 
+      restoreButton = controlsGroup2.add(
+        'iconbutton',
+        undefined,
+        ICON_FILES.restoreComp2,
+        {
+          name: 'restoreButton',
+          style: 'toolbutton',
+          toggle: false,
+        }
+      );
+      restoreButton.onClick = function() {
+        try {
+          restoreButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
+      restoreButton.size = [elemSize, elemSize];
+      restoreButton.enabled = false;
+      restoreButton.helpTip = 'Restore the project used to render the current version';
+
+      makeMovieButton = controlsGroup2.add(
+        'iconbutton',
+        undefined,
+        ICON_FILES.makeMP4,
+        {
+          name: 'makeMovieButton',
+          style: 'toolbutton',
+          toggle: false,
+        }
+      );
+      makeMovieButton.onClick = function() {
+        try {
+          makeMovieButton_onClick();
+        } catch (e) {
+          catchError(e);
+        }
+      };
+      makeMovieButton.size = [elemSize, elemSize];
+      makeMovieButton.enabled = false;
+      makeMovieButton.helpTip = 'Make a mp4 from the selected sequence-output.';
 
       stopButton = controlsGroup2.add(
         'iconbutton',
@@ -431,7 +450,16 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         }
       };
       listItem.onActivate = function() {
-        // cls.prototype.refresh();
+        /**
+         * Refresh when there's a dicrepency
+         * between the number of output modules.
+         */
+        if (data.count() !== numOutputModules()) {
+          var cs = cls.prototype.getSelection();
+          cls.prototype.clear();
+          refreshButton_onClick();
+          cls.prototype.setSelection(cs);
+        }
       };
     }();
 
@@ -564,7 +592,18 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
        * @return {icon}       the icon to use
        */
       function statuscolor(index) {
+        var isSequence = new FFMPEG().isSequence(data.item(index).ext);
+
+
         var renderedCount = data.item(index).rendered.count;
+        if (isSequence === false) {
+          if (renderedCount === 1) {
+            return ICON_FILES.greenIcon;
+          } else {
+            return ICON_FILES.redIcon;
+          }
+        }
+
         var incompleteCount = data.item(index).incomplete.count;
         var missingCount = data.item(index).missing.count;
         var duration = data.item(index).duration;
@@ -657,6 +696,98 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       versionsDropdown.removeAll();
     },
 
+    ffmpeg: function() {
+      if (!(listItem.selection)) {
+        return;
+      }
+
+      var omItem = data.getOutputModule(
+        data.item(listItem.selection.index).rqIndex,
+        data.item(listItem.selection.index).omIndex
+      );
+
+      if (omItem === null) {
+        cls.prototype.clear();
+        refreshButton_onClick();
+        return;
+      }
+
+      var pathcontrol = new Pathcontrol();
+      pathcontrol.initFromOutputModule(omItem);
+
+      var ffmpeg = new FFMPEG();
+      var isSequence = ffmpeg.isSequence(data.item(listItem.selection.index).ext);
+      if (!isSequence) {
+        Window.alert(
+          'You can only make movies from image-sequence outputs.',
+          SCRIPT_NAME
+        );
+        return;
+      }
+
+      if (!getSetting('ffmpeg_bin')) {
+        Window.alert(
+          'FFmpeg has not been set.',
+          SCRIPT_NAME
+        );
+        return;
+      }
+
+      if (getSetting('ffmpeg_bin').length === 0) {
+        Window.alert(
+          'FFmpeg has not been set.',
+          SCRIPT_NAME
+        );
+        return;
+      };
+
+      var duration = data.item(listItem.selection.index).duration + 1;
+      var renderedCount = data.item(listItem.selection.index).rendered.count;
+      if (duration != renderedCount) {
+        Window.alert(
+          'The sequence has missing or incomplete frames.\nMake sure all the frames are rendered before continuing.',
+          SCRIPT_NAME + ': Unable to make movie'
+        );
+        return;
+      }
+
+      var index = cls.prototype.getSelection();
+
+      var batname = (
+        '[' + app.project.file.displayName + ']' +
+        '[' + data.item(index).compname + ']' +
+        '_ffmpeg.bat'
+      );
+      var bat = new File(TEMP_DIR.absoluteURI + '/' + batname);
+
+      var cmd = '';
+
+      var h264 = new File(
+        data.item(index).basepath + sep +
+        data.item(index).basename + 'h264.mp4'
+      );
+      h264.changePath(h264.parent.parent.fsName + sep + h264.displayName);
+      h264 = h264.openDlg('Make movie from sequence', 'mp4:*.mp4', false);
+      if (!h264) {
+        return;
+      }
+
+      cmd = (
+        ffmpeg.getCommand(data.item(index), h264.fsName) + ' & ' +
+        'if exist "' + h264.fsName + '" ' +
+        'start "" "' + h264.fsName + '"'
+      );
+
+      var start = (
+        'start \"' + 'FFmpeg' + '\" ' + 'cmd /c "' + cmd + '"'
+      );
+
+      bat.open('w');
+      bat.write(start);
+      bat.close();
+      bat.execute();
+    },
+
     aerender: function(promptForFile) {
       if (!(listItem.selection)) {
         return;
@@ -712,7 +843,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         '.bat'
       );
 
-      bat = new File(settings.tempFolder.fsName + sep + batname);
+      bat = new File(TEMP_DIR.absoluteURI + '/' + batname);
 
       app.project.save();
 
@@ -724,60 +855,78 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       aeparchive.createDir();
       aeparchive.archive();
 
-
       omItem.file.parent.create();
 
       if (promptForFile) {
         bat.changePath(getSetting('pathcontrol_fsName') + sep + batname);
         bat = bat.openDlg('Save aerender batch file.', 'Batch:*.bat', false);
+        if (!bat) {
+          return;
+        }
       }
 
-      if (bat) {
-        var variables = '::' + app.project.file.fsName + '\n' +
-          '::' + data.item(index).compname + '\n' +
-          'set aerenderPath=' + getSetting('aerender_bin') + '\n' +
-          'set project=' + app.project.file.fsName + '\n' +
-          'set rqindex=' + data.item(index).rqIndex + '\n' +
-          'set output=' + omItem.file.fsName + '\n' +
-          'set s=' + parseInt(data.item(index).startframe, 10) + '\n' +
-          'set e=' + parseInt(data.item(index).endframe, 10) + '\n';
+      var variables = '::' + app.project.file.fsName + '\n' +
+        '::' + data.item(index).compname + '\n' +
+        'set aerenderPath=' + getSetting('aerender_bin') + '\n' +
+        'set project=' + app.project.file.fsName + '\n' +
+        'set rqindex=' + data.item(index).rqIndex + '\n' +
+        'set output=' + omItem.file.fsName + '\n' +
+        'set s=' + parseInt(data.item(index).startframe, 10) + '\n' +
+        'set e=' + parseInt(data.item(index).endframe, 10) + '\n';
 
-        var cmd = '"%aerenderPath%"' +
-          ' -project "%project%"' +
-          ' -rqindex %rqindex%' +
-          ' -output "%output%"' +
-          ' -s %s%' +
-          ' -e %e%' +
-          ' -sound ON -continueOnMissingFootage';
+      var cmd = '"%aerenderPath%"' +
+        ' -project "%project%"' +
+        ' -rqindex %rqindex%' +
+        ' -output "%output%"' +
+        ' -s %s%' +
+        ' -e %e%' +
+        ' -sound ON -continueOnMissingFootage';
 
-        var manager = new Taskmanager();
-        var PIDs = manager.getPIDs();
+      var manager = new Taskmanager();
+      var PIDs = manager.getPIDs();
+      var start;
 
-        if (PIDs.length === 0) {
-          if (getSetting('ffmpeg_enabled') == 'true') {
-            var ffmpeg = new FFMPEG();
-            var ffmpeg_cmd = ffmpeg.getCommand(data.item(index));
-            if (ffmpeg_cmd) {
-              cmd = (
-                cmd + ' & ' +
-                ffmpeg_cmd + ' & ' +
-                'start "" "' + data.item(index).basepath + sep + data.item(index).basename + 'h264.mp4' + '"'
-              );
-            }
-          }
-        }
-
-        var start = (
+      if (PIDs.length !== 0) {
+        start = (
           'start \"' + 'Rendering ' +
           data.item(index).compname + ' of ' +
           app.project.file.displayName + '\" ' + 'cmd /c "' + cmd + '"'
         );
-
         bat.open('w');
         bat.write(variables + '\n' + start);
         bat.close();
         bat.execute();
+        return;
       }
+
+      if (getSetting('ffmpeg_enabled') == 'true') {
+        var ffmpeg = new FFMPEG();
+        var h264 = new File(
+          data.item(index).basepath + sep +
+          data.item(index).basename + 'h264.mp4'
+        );
+        h264.changePath(h264.parent.parent.fsName + sep + h264.displayName);
+
+        var ffmpeg_cmd = ffmpeg.getCommand(data.item(index), h264.fsName);
+        if (ffmpeg_cmd) {
+          cmd = (
+            cmd + ' & ' +
+            ffmpeg_cmd + ' & ' +
+            'start "" "' + h264.fsName + '"'
+          );
+        }
+      }
+
+      start = (
+        'start \"' + 'Rendering ' +
+        data.item(index).compname + ' of ' +
+        app.project.file.displayName + '\" ' + 'cmd /c "' + cmd + '"'
+      );
+
+      bat.open('w');
+      bat.write(variables + '\n' + start);
+      bat.close();
+      bat.execute();
     },
 
     setSelection: function(index) {
@@ -847,7 +996,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     var item = data.item(listItem.selection.index);
 
     var sequencePath = item.file.fsName;
-    var file = new File(settings.tempFolder.fullName + '/_playercall.bat');
+    var file = new File(TEMP_DIR.absoluteURI + '/renderQueuePlus_rvCall.bat');
     var cmd;
 
     if (getSetting('rv_bin') === null) {
@@ -916,6 +1065,13 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     var p = f.parent;
 
     reveal(p);
+  }
+
+  /**
+   * Reveal the selected render output in the explorer
+   */
+  function makeMovieButton_onClick() {
+    cls.prototype.ffmpeg();
   }
 
   /**
@@ -1035,7 +1191,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
 
 
   /**
-   * Refresh data
+   * Re-sets the data from the output modules.
    */
   function refreshButton_onClick() {
     var cs = cls.prototype.getSelection();
@@ -1044,14 +1200,6 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       data.setData(cs);
     } else {
       data.setData();
-    }
-
-    var keys = [];
-    for (var key in data) {
-      keys.push(key);
-    }
-    if (keys.length !== numOutputModules()) {
-      cls.prototype.clear();
     }
 
     cls.prototype.refresh();
@@ -1140,20 +1288,20 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     var manager = new Taskmanager();
     var PIDs = manager.getPIDs();
 
-    if (PIDs.length === 0) {
-      Window.alert('No background processes running.',
-      SCRIPT_NAME
-    );
-      return;
-    } else if (PIDs.length === 1) {
-      var call = manager.kill(PIDs[0]);
-      Window.alert(call, SCRIPT_NAME);
-      return;
-    } else {
-      var managerWindow = new TaskmanagerWindow(manager);
-      managerWindow.show();
-      return;
-    }
+    // if (PIDs.length === 0) {
+    //   Window.alert('No background processes running.',
+    //   SCRIPT_NAME
+    // );
+    //   return;
+    // } else if (PIDs.length === 1) {
+    //   var call = manager.kill(PIDs[0]);
+    //   Window.alert(call, SCRIPT_NAME);
+    //   return;
+    // }
+
+    var managerWindow = new TaskmanagerWindow(manager);
+    managerWindow.show();
+    return;
   }
 
   /**
@@ -1191,12 +1339,17 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       );
       return;
     };
+
+    var ffmpeg = new FFMPEG();
+    var path = data.item(index).exists.fsNames[0];
+
     try {
       importFootage(
-        data.item(index).exists.fsNames[0],
-        true,
+        path,
+        ffmpeg.isSequence(path),
         data.item(index).compname,
-        pathcontrol.getVersionString()
+        pathcontrol.getVersionString(),
+        data.item(index).framerate
       );
     } catch (e) {
       catchError(e);
@@ -1355,6 +1508,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       importButton.enabled = true;
       browseButton.enabled = true;
       restoreButton.enabled = true;
+      makeMovieButton.enabled = true;
       framesButton.enabled = true;
       versionsIncrement.enabled = true;
       versionsReset.enabled = true;
@@ -1414,6 +1568,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       importButton.enabled = false;
       browseButton.enabled = false;
       restoreButton.enabled = false;
+      makeMovieButton.enabled = false;
       framesButton.enabled = false;
       versionsIncrement.enabled = false;
       versionsReset.enabled = false;
@@ -1426,7 +1581,11 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
    */
   function listItem_onDoubleClick() {
     var index = mainWindow.getSelection();
-    data.item(index).comp.openInViewer();
+    if (index === null) {
+      app.project.showWindow(true);
+    } else {
+      data.item(index).comp.openInViewer();
+    }
   }
 
   return cls;
@@ -1435,5 +1594,5 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
   SCRIPT_NAME,
   6,
   ['Composition', 'Path', 'Complete', 'Missing', 'Incomplete', 'Size'],
-  [250, 550, 100, 100, 100, 70]
+  [250, 426, 100, 100, 100, 70]
 );

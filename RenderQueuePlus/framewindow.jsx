@@ -156,11 +156,13 @@ var FrameWindow = function() {
       var file = new File('/c/temp01234.tmp');
       var result;
       var sel = listItem.selection;
+      var existingFiles;
+      var idx;
+      var text = 'Sorry, there was an error deleting the file.';
 
       for (var i = 0; i < sel.length; i++) {
-        var existingFiles = data.item(index).exists;
-
-        var idx = existingFiles.names.indexOf(sel[i].text);
+        existingFiles = data.item(index).exists;
+        idx = existingFiles.names.indexOf(sel[i].text);
         file.changePath(existingFiles.fsNames[idx]);
 
         if (!(file.exists)) {
@@ -173,7 +175,6 @@ var FrameWindow = function() {
           sel[i].enabled = false;
           sel[i].text = 'Deleted.';
         } else {
-          var text = 'Sorry, there was an error deleting the file.';
           sel[i].text = text;
         }
       }

@@ -25,43 +25,52 @@ SOFTWARE.
 */
 
 
-var renderQueuePlus;
-var rqPlusIsValid = false;
+var renderQueuePlus = this;
 
 (function() {
+  var SCRIPT_FILE = new File($.fileName);
+  var SCRIPT_NAME = 'RenderQueue+';
+  var LAST_MODIFIED = '28/02/2018';
+  var VERSION = '0.1.0';
+  var AUTHOR = 'Gergely Wootsch';
+  var EMAIL = 'hello@gergely-wootsch.com';
+  var WEBSITE = 'http://gergely-wootsch.com/renderqueueplus';
+  var DESCRIPTION = 'A handy workflow utility to render, review & manager outputs.';
+  var HELP = '';
   var MODULE_DIR = new Folder('./RenderQueuePlus');
+  var TEMP_DIR = new Folder(Folder.temp.absoluteURI + '/' + SCRIPT_NAME);
+  TEMP_DIR.create();
+
+  if (!TEMP_DIR.exists) {
+    Window.alert(
+      'An error occured creating the temporary folder.',
+      SCRIPT_NAME + ': Error making temp folder'
+    );
+    return;
+  }
+
   var alertString = '';
 
   if (!(MODULE_DIR.exists)) {
     alertString += '\'' + MODULE_DIR.displayName + '\' folder is missing.\n';
     alertString += 'Make sure it is placed in the same folder ' +
-    'as the \'RenderQueue+.jsx\' file.';
-
-    Window.alert(alertString, 'RenderQueue+');
-
-    rqPlusIsValid = false;
+    'as the \'RenderQueue+.jsxbin\' file.';
+    Window.alert(alertString, SCRIPT_NAME);
     return;
   }
 
   try {
-    var f = new File(Folder.temp.fsName + '/_temp_.txt');
+    var f = new File(TEMP_DIR.absoluteURI + '/_checkScriptPermission.txt');
     f.open('w');
-    f.write('test');
+    f.write('RQ+ write permission test');
     f.close();
     f.remove();
+    // @include "RenderQueuePlus/main.jsx"
   } catch (e) {
     alertString += 'The script doesn\'t have permission to run.\n\n';
     alertString += 'Make sure \'Allow Scripts to Write Files and Access Network\' is ticked in\n';
     alertString += 'Edit  >  Preferences  >  General  >  Allow Scripts to Write Files (...)';
-
-    Window.alert(alertString, 'RenderQueue+');
-
-    rqPlusIsValid = false;
+    Window.alert(alertString, SCRIPT_NAME);
     return;
   }
-    rqPlusIsValid = true;
 })();
-
-if (rqPlusIsValid) {
-  // @include "RenderQueuePlus/main.jsx"
-}

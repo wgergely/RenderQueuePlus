@@ -25,28 +25,20 @@ SOFTWARE.
 */
 
 
-renderQueuePlus = function(thisObj) {
-  var renderQueuePlus = this;
-
-  var LAST_MODIFIED = '08/02/2018';
-  var VERSION = '0.2.0';
-  var SCRIPT_NAME = 'Render Queue+';
-  var AUTHOR = 'Gergely Wootsch';
-  var EMAIL = 'hello@gergely-wootsch.com';
-  var WEBSITE = 'http://gergely-wootsch.com';
-  var DESCRIPTION = '';
-  var HELP = '';
+(function(thisObj) {
+  var LICENSED = false;
 
   if (!(File.fs == 'Windows')) {
-    Window.alert('Sorry, this currently only works on Windows :(\n' +
-    'Let me know if you\'d like to see it implemented for macs!\n\n' +
-    EMAIL, SCRIPT_NAME);
+    Window.alert(
+      'Sorry, this currently only works on Windows :(\n' +
+      'Let me know if you\'d like to see it implemented for Mac.\n\n' +
+      EMAIL,
+      SCRIPT_NAME
+    );
     return;
   };
 
-
   var projectFile = app.project.file;
-  var scriptFile = new File($.fileName);
 
   // @include "common.jsx"
   // @include "icons.jsx"
@@ -62,6 +54,31 @@ renderQueuePlus = function(thisObj) {
   // @include "taskmanager.jsx"
   // @include "taskmanagerUI.jsx"
 
+  // Licensing
+try {
+  // @include "license.jsx"
+  var llic = new LOCAL_LICENCE();
+  var licence_win;
+  if (llic.exists) {
+    var licensee = llic.read();
+    var glic = new GUMROAD_LICENCE(licensee[0], licensee[1]);
+    if (!glic.verify()) {
+      licence_win = new ENTER_LICENCE();
+      licence_win.show();
+    } else {
+      LICENSED = true;
+    }
+  } else {
+    licence_win = new ENTER_LICENCE();
+    licence_win.show();
+  }
+} catch (e) {
+  catchError(e);
+}
+
+if (!LICENSED) {
+  return;
+}
   // Module globals
   var settings = new Settings();
   var listItem;
@@ -69,7 +86,6 @@ renderQueuePlus = function(thisObj) {
   var palette;
   var data = new Data();
   var mainWindow = new MainWindow();
-
 
   mainWindow.setlist(
     data.compnames(),
@@ -81,4 +97,4 @@ renderQueuePlus = function(thisObj) {
   );
   mainWindow.show();
   return mainWindow;
-}(this);
+}(renderQueuePlus));

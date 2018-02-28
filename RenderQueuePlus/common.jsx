@@ -285,22 +285,22 @@ function ellipsis(inString, length) {
  * @param  {number}  length   clip the string to this length
  * @return {string}          the clipped text
  */
- function ellipsis2(inString, length) {
-   if (!(length)) {
-     var length = 75;
-   }
-   if (inString) {
-     if (inString.length > length) {
-       var head = inString.substr(0, Math.round(length/2));
-       var dots = ' ... ';
-       var tail = inString.substr(inString.length - Math.round(length/2), inString.length);
-       return head + dots + tail;
-     }
-     return inString;
-   } else {
-     return '-';
-   }
- };
+function ellipsis2(inString, length) {
+  if (!(length)) {
+    var length = 75;
+  }
+  if (inString) {
+    if (inString.length > length) {
+      var head = inString.substr(0, Math.round(length / 2));
+      var dots = ' ... ';
+      var tail = inString.substr(inString.length - Math.round(length / 2), inString.length);
+      return head + dots + tail;
+    }
+    return inString;
+  } else {
+    return '-';
+  }
+};
 
 /**
  * Formats a byte into a human readable string, eg 1024 -> '1KB'
@@ -318,6 +318,16 @@ function formatBytes(a, b) {
   return (a / Math.pow(c, f)).toPrecision(d) + ' ' + e[f];
 };
 
+
+/**
+ * After Effects' JSON is loaded after the panel initialized.
+ * This is a polyfill for the missing module.
+ * @param  {[type]} typeof [description]
+ * @return {[type]}        [description]
+ */
+/* eslint-disable */
+"object"!=typeof JSON&&(JSON={}),function(){"use strict";function f(t){return t<10?"0"+t:t}function quote(t){return escapable.lastIndex=0,escapable.test(t)?'"'+t.replace(escapable,function(t){var e=meta[t];return"string"==typeof e?e:"\\u"+("0000"+t.charCodeAt(0).toString(16)).slice(-4)})+'"':'"'+t+'"'}function str(t,e){var n,r,o,f,u,i=gap,p=e[t];switch(p&&"object"==typeof p&&"function"==typeof p.toJSON&&(p=p.toJSON(t)),"function"==typeof rep&&(p=rep.call(e,t,p)),typeof p){case"string":return quote(p);case"number":return isFinite(p)?String(p):"null";case"boolean":case"null":return String(p);case"object":if(!p)return"null";if(gap+=indent,u=[],"[object Array]"===Object.prototype.toString.apply(p)){for(f=p.length,n=0;n<f;n+=1)u[n]=str(n,p)||"null";return o=0===u.length?"[]":gap?"[\n"+gap+u.join(",\n"+gap)+"\n"+i+"]":"["+u.join(",")+"]",gap=i,o}if(rep&&"object"==typeof rep)for(f=rep.length,n=0;n<f;n+=1)"string"==typeof rep[n]&&(o=str(r=rep[n],p))&&u.push(quote(r)+(gap?": ":":")+o);else for(r in p)Object.prototype.hasOwnProperty.call(p,r)&&(o=str(r,p))&&u.push(quote(r)+(gap?": ":":")+o);return o=0===u.length?"{}":gap?"{\n"+gap+u.join(",\n"+gap)+"\n"+i+"}":"{"+u.join(",")+"}",gap=i,o}}var cx,escapable,gap,indent,meta,rep;"function"!=typeof Date.prototype.toJSON&&(Date.prototype.toJSON=function(){return isFinite(this.valueOf())?this.getUTCFullYear()+"-"+f(this.getUTCMonth()+1)+"-"+f(this.getUTCDate())+"T"+f(this.getUTCHours())+":"+f(this.getUTCMinutes())+":"+f(this.getUTCSeconds())+"Z":null},String.prototype.toJSON=Number.prototype.toJSON=Boolean.prototype.toJSON=function(){return this.valueOf()}),"function"!=typeof JSON.stringify&&(escapable=/[\\\"\x00-\x1f\x7f-\x9f\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,meta={"\b":"\\b","\t":"\\t","\n":"\\n","\f":"\\f","\r":"\\r",'"':'\\"',"\\":"\\\\"},JSON.stringify=function(t,e,n){var r;if(gap="",indent="","number"==typeof n)for(r=0;r<n;r+=1)indent+=" ";else"string"==typeof n&&(indent=n);if(rep=e,e&&"function"!=typeof e&&("object"!=typeof e||"number"!=typeof e.length))throw new Error("JSON.stringify");return str("",{"":t})}),"function"!=typeof JSON.parse&&(cx=/[\u0000\u00ad\u0600-\u0604\u070f\u17b4\u17b5\u200c-\u200f\u2028-\u202f\u2060-\u206f\ufeff\ufff0-\uffff]/g,JSON.parse=function(text,reviver){function walk(t,e){var n,r,o=t[e];if(o&&"object"==typeof o)for(n in o)Object.prototype.hasOwnProperty.call(o,n)&&(void 0!==(r=walk(o,n))?o[n]=r:delete o[n]);return reviver.call(t,e,o)}var j;if(text=String(text),cx.lastIndex=0,cx.test(text)&&(text=text.replace(cx,function(t){return"\\u"+("0000"+t.charCodeAt(0).toString(16)).slice(-4)})),/^[\],:{}\s]*$/.test(text.replace(/\\(?:["\\\/bfnrt]|u[0-9a-fA-F]{4})/g,"@").replace(/"[^"\\\n\r]*"|true|false|null|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?/g,"]").replace(/(?:^|:|,)(?:\s*\[)+/g,"")))return j=eval("("+text+")"),"function"==typeof reviver?walk({"":j},""):j;throw new SyntaxError("JSON.parse")})}();
+/* eslint-enable */
 
 /**
  * String.trim() Polyfill
@@ -358,9 +368,10 @@ Array.prototype.indexOf || (Array.prototype.indexOf = function(a, b) {
  * @param  {[type]} sequence [description]
  * @param  {[type]} compName [description]
  * @param  {[type]} version  [description]
+ * @param  {[type]} framerate [description]
  * @return {[type]}          [description]
  */
-function importFootage(inPath, sequence, compName, version) {
+function importFootage(inPath, sequence, compName, version, framerate) {
   /**
    * private convenence function to import a footage item
    * @param  {[type]} inPath [description]
@@ -377,6 +388,8 @@ function importFootage(inPath, sequence, compName, version) {
   };
 
   var footageItem = importFile(inPath);
+  // footageItem.mainSource.nativeFrameRate = framerate; // READ ONLY.
+
   var folderItem;
 
   var rExists = false;
@@ -439,10 +452,16 @@ function importFootage(inPath, sequence, compName, version) {
         'Footage already exists in the project.',
         SCRIPT_NAME
       );
+
+
       footageItem.remove();
       footageItem = v.item(i);
+      v.item(i).mainSource.reload();
+
+      break;
     }
   }
+
   footageItem.parentFolder = v;
   app.endUndoGroup();
 
@@ -557,12 +576,12 @@ function reveal(p) {
  * @param  {string} url the url to visit
  */
 function openLink(url) {
-   var linkJumper = new File(Folder.temp.absoluteURI + '/rqplus_link.html');
-   linkJumper.open('w');
-   var linkBody = '<html><head><META HTTP-EQUIV=Refresh CONTENT="0; URL=' + url + '"></head><body><p></body></html>';
-   linkJumper.write(linkBody);
-   linkJumper.close();
-   linkJumper.execute();
+  var linkJumper = new File(TEMP_DIR.absoluteURI + '/renderQueuePlus_linkJumper.html');
+  linkJumper.open('w');
+  var linkBody = '<html><head><META HTTP-EQUIV=Refresh CONTENT="0; URL=' + url + '"></head><body><p></body></html>';
+  linkJumper.write(linkBody);
+  linkJumper.close();
+  linkJumper.execute();
 }
 
 /**
@@ -589,7 +608,7 @@ function setRenderQueueItemDefaults(rqIndex, omIndex, pathcontrol) {
    * TODO: This perhaps needs exposing.
    * Keeping it unexposed for the time being.
    */
-   function setDefaults() {
+  function setDefaults() {
     rqItem.setSetting('Quality', 2); // 'best'
     rqItem.setSetting('Resolution', '1,1'); // 'full' {'x': 1, 'y': 1}
     omItem.setSetting('Video Output', true);
