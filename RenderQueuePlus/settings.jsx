@@ -178,10 +178,10 @@ var Settings = function(thisObj) {
 
     settings.pathcontrol.basepattern = folder.fsName;
     settings.pathcontrol.fsName = folder.fsName;
-    setSetting('pathcontrol_fsName', settings.pathcontrol.fsName);
+    setSetting('pathcontrol_path', settings.pathcontrol.fsName);
     setSetting('pathcontrol_basepattern', settings.pathcontrol.fsName);
 
-    setUIString('pathcontrol_fsName', settings.pathcontrol.fsName);
+    setUIString('pathcontrol_path', settings.pathcontrol.fsName);
     setUIString('pathcontrol_basepattern', settings.pathcontrol.fsName);
   }
 
@@ -346,13 +346,13 @@ var Settings = function(thisObj) {
      */
     function set(s) {
       settings.pathcontrol.fsName = s;
-      setSetting('pathcontrol_fsName', s);
-      setUIString('pathcontrol_fsName', s);
+      setSetting('pathcontrol_path', s);
+      setUIString('pathcontrol_path', s);
     }
 
     // If no pattern set default to desktop
     settings.pathcontrol.basepattern = settings.pathcontrol.basepattern.
-    replace(/^([^a-zA-Z0-9\.]{1,})/g, '');
+    replace(/^([^a-zA-Z0-9\.\-]{1,})/g, '');
 
     if (settings.pathcontrol.basepattern === '') {
       set(desktop.fsName);
@@ -394,13 +394,13 @@ var Settings = function(thisObj) {
         }
         parent = parent.parent;
       }
-      s = s.replace(/\.\//gi, '') + sep;
+      s = s.replace(/\.\//gi, '') + '/';
       if (numParents > 0) {
-        s = parent.fsName + sep + s;
+        s = parent.absoluteURI + '/' + s;
       } else {
-        return app.project.file.parent.fsName;
+        return app.project.file.parent.absoluteURI;
       }
-      s = s.replace(/(\\){1,}|(\/){1,}/gi, sep);
+      s = s.replace(/(\\){1,}/gi, '/');
       return s;
     }
 
@@ -423,16 +423,18 @@ var Settings = function(thisObj) {
      * @return {String}   file path
      */
     function getNormBasepath(s) {
-      var re0 = /\\/gi; // forward slashes
+      var re0 = /\\/gi; // backslashes
       var re1 = /\.\.\//gi; // grandparents
       var re2 = /\.\//gi; // parents
       var re3 = /^[a-z0-9\s]/gi; // alpha-numberic and whitespace characters at the start
       var re4 = /\.{2,}/gi; // multiple dots
+
       // normalize path
       s = s.
       replace(re0, '/').
       replace(re1, '././').
       replace(re4, '.');
+
       // if the string contains relative pointers
       // remove any characters preceeding them
       if (re2.test(s)) {
@@ -499,13 +501,13 @@ var Settings = function(thisObj) {
         getSetting('pathcontrol_basepattern')
       );
 
-      if (!(getSetting('pathcontrol_fsName') === '')) {
+      if (!(getSetting('pathcontrol_path') === '')) {
         setUIString(
-          'pathcontrol_fsName',
-          ellipsis2(getSetting('pathcontrol_fsName'))
+          'pathcontrol_path',
+          ellipsis2(getSetting('pathcontrol_path'))
         );
       } else {
-        setUIString('pathcontrol_fsName', 'No pattern has been set.');
+        setUIString('pathcontrol_path', 'No pattern has been set.');
       }
 
       if (getSetting('aerender_bin')) {
@@ -644,7 +646,7 @@ var Settings = function(thisObj) {
         settings.pathcontrol.basepattern = '';
         setSetting('pathcontrol_basepattern', '');
       }
-      settings.pathcontrol.fsName = getSetting('pathcontrol_fsName');
+      settings.pathcontrol.fsName = getSetting('pathcontrol_path');
     };
 
     this.createUI = function(cls) {
@@ -752,24 +754,24 @@ var Settings = function(thisObj) {
         }
       );
 
-      var pathcontrol_fsNameLabel = pathcontrolResultGroup.add(
+      var pathcontrol_pathLabel = pathcontrolResultGroup.add(
         'statictext',
         undefined,
         'To set a path relative to the active project you can use\n./  or  ../', {
-          name: 'pathcontrol_fsNameLabel',
+          name: 'pathcontrol_pathLabel',
           multiline: true,
         }
       );
-      pathcontrol_fsNameLabel.size = [150, 45];
+      pathcontrol_pathLabel.size = [150, 45];
 
-      var pathcontrol_fsName = pathcontrolResultGroup.add(
+      var pathcontrol_path = pathcontrolResultGroup.add(
         'statictext',
         undefined,
         'No pattern has been set.', {
-          name: 'pathcontrol_fsName',
+          name: 'pathcontrol_path',
         }
       );
-      pathcontrol_fsName.size = [450, 45];
+      pathcontrol_path.size = [450, 45];
 
       // ====================================================
 
@@ -1135,7 +1137,7 @@ var Settings = function(thisObj) {
       );
 
       closeBtn.onClick = function() {
-        var folder = new Folder(getSetting('pathcontrol_fsName'));
+        var folder = new Folder(getSetting('pathcontrol_path'));
         if (!folder.exists) {
           var s = '\'' + folder.fsName + '\'' + ' doesn\'t exists.\n';
           s += 'Do you want to create it now?';

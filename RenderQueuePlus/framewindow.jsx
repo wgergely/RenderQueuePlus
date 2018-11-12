@@ -163,7 +163,7 @@ var FrameWindow = function() {
       for (var i = 0; i < sel.length; i++) {
         existingFiles = data.item(index).exists;
         idx = existingFiles.names.indexOf(sel[i].text);
-        file.changePath(existingFiles.fsNames[idx]);
+        file.changePath(existingFiles.paths[idx]);
 
         if (!(file.exists)) {
           continue;
@@ -231,14 +231,14 @@ var FrameWindow = function() {
 
       for (var i = 0; i < listItem.selection.length; i++) {
         idx = listItem.selection[i].index;
-        if (data.item(index).exists.fsNames.length < 1) {
+        if (data.item(index).exists.paths.length < 1) {
           Window.alert(
             'No files have been rendered yet.',
             SCRIPT_NAME + ': Unable to import footage'
           );
         };
         var footage = importFootage(
-          data.item(index).exists.fsNames[idx],
+          data.item(index).exists.paths[idx],
           false,
           data.item(index).compname,
           pathcontrol.getVersionString()
@@ -307,16 +307,16 @@ var FrameWindow = function() {
       }
     };
 
-    var sep = controlsGroup.add(
+    var separator = controlsGroup.add(
       'iconbutton',
       undefined,
-      ICON_FILES.separator,
+      ICON_FILES.separatorarator,
       {
         style: 'toolbutton',
       }
     );
-    sep.enabled = false;
-    sep.size = [1, elemSize];
+    separator.enabled = false;
+    separator.size = [1, elemSize];
 
     var browseButton = controlsGroup.add(
       'iconbutton',
@@ -394,15 +394,15 @@ var FrameWindow = function() {
     };
     refreshButton.size = [elemSize, elemSize];
 
-    var sep1 = w.add(
+    var separator1 = w.add(
       'group',
       undefined,
       {
-        name: 'sep1',
+        name: 'separator1',
         orientation: 'row',
       }
     );
-    sep1.size = [20, 20];
+    separator1.size = [20, 20];
 
     var searchGroup = w.add('group', undefined, {
       name: 'searchGroup',
@@ -439,7 +439,7 @@ var FrameWindow = function() {
       }
     );
     searchField.helpTip = 'Filter the list of files by entering a range, eg. 1-100,\n' +
-    'and/or numbers separated by comas, eg. 1,2,3,8';
+    'and/or numbers separatorarated by comas, eg. 1,2,3,8';
     cls.prototype.searchField = searchField;
 
     var searchButton = searchSubGroup.add('button', undefined, 'Filter', {
@@ -553,7 +553,7 @@ var FrameWindow = function() {
 
       var existingFiles = data.item(index).exists;
       var idx = existingFiles.names.indexOf(listItem.selection[0].text);
-      var file = new File(existingFiles.fsNames[idx]);
+      var file = new File(existingFiles.paths[idx]);
 
       try {
         var imageWindow = new Window('dialog', file.displayName);
@@ -709,24 +709,6 @@ var FrameWindow = function() {
     w.layout.layout(true);
     w.layout.resize();
 
-    // w.onResizing = w.onResize = function() {
-    //   // searchGroup.size = [w.size.width, 20];
-    //   searchInfoField.size = [w.size.width * 0.333, 20];
-    //   searchField.size = [w.size.width * 0.666, 20];
-    //
-    //   infoGroup1.size = [w.size.width, 20];
-    //   infoGroup2.size = [w.size.width, 20];
-    //   infoGroup3.size = [w.size.width, 20];
-    //   infoGroup4.size = [w.size.width, 20];
-    //   infoField1.size = [w.size.width, 20];
-    //   infoField2.size = [w.size.width, 20];
-    //   infoField3.size = [w.size.width, 20];
-    //   infoField4.size = [w.size.width, 20];
-    //
-    //   listGroup.size = [w.size.width, 500];
-    //   listItem.size = [w.size.width, 500];
-    //   w.layout.resize();
-    // };
 
     return w;
   }

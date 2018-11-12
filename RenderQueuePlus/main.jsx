@@ -55,30 +55,31 @@ SOFTWARE.
   // @include "taskmanagerUI.jsx"
 
   // Licensing
-try {
-  // @include "license.jsx"
-  var llic = new LOCAL_LICENCE();
-  var licence_win;
-  if (llic.exists) {
-    var licensee = llic.read();
-    var glic = new GUMROAD_LICENCE(licensee[0], licensee[1]);
-    if (!glic.verify()) {
+  try {
+    // @include "license.jsx"
+    var llic = new LOCAL_LICENCE();
+    var licence_win;
+    if (llic.exists) {
+      var licensee = llic.read();
+      var glic = new GUMROAD_LICENCE(licensee[0], licensee[1]);
+      if (!glic.verify()) {
+        licence_win = new ENTER_LICENCE();
+        licence_win.show();
+      } else {
+        LICENSED = true;
+      }
+    } else {
       licence_win = new ENTER_LICENCE();
       licence_win.show();
-    } else {
-      LICENSED = true;
     }
-  } else {
-    licence_win = new ENTER_LICENCE();
-    licence_win.show();
+  } catch (e) {
+    catchError(e);
   }
-} catch (e) {
-  catchError(e);
-}
 
-if (!LICENSED) {
-  return;
-}
+  if (!LICENSED) {
+    return;
+  }
+
   // Module globals
   var settings = new Settings();
   var listItem;

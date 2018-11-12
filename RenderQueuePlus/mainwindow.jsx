@@ -763,10 +763,10 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       var cmd = '';
 
       var h264 = new File(
-        data.item(index).basepath + sep +
+        data.item(index).basepath + '/' +
         data.item(index).basename + 'h264.mp4'
       );
-      h264.changePath(h264.parent.parent.fsName + sep + h264.displayName);
+      h264.changePath(h264.parent.parent.absoluteURI + '/' + h264.name);
       h264 = h264.openDlg('Make movie from sequence', 'mp4:*.mp4', false);
       if (!h264) {
         return;
@@ -848,7 +848,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       app.project.save();
 
       var aeparchive = new Aeparchives(
-        getSetting('pathcontrol_fsName'),
+        getSetting('pathcontrol_path'),
         data.item(index).compname,
         pathcontrol.getVersionString()
       );
@@ -858,7 +858,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       omItem.file.parent.create();
 
       if (promptForFile) {
-        bat.changePath(getSetting('pathcontrol_fsName') + sep + batname);
+        bat.changePath(getSetting('pathcontrol_path') + '/' + batname);
         bat = bat.openDlg('Save aerender batch file.', 'Batch:*.bat', false);
         if (!bat) {
           return;
@@ -902,10 +902,10 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       if (getSetting('ffmpeg_enabled') == 'true') {
         var ffmpeg = new FFMPEG();
         var h264 = new File(
-          data.item(index).basepath + sep +
+          data.item(index).basepath + '/' +
           data.item(index).basename + 'h264.mp4'
         );
-        h264.changePath(h264.parent.parent.fsName + sep + h264.displayName);
+        h264.changePath(h264.parent.parent.absoluteURI + '/' + h264.name);
 
         var ffmpeg_cmd = ffmpeg.getCommand(data.item(index), h264.fsName);
         if (ffmpeg_cmd) {
@@ -1007,7 +1007,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       return;
     }
 
-    if (item.exists.fsNames.length < 1) {
+    if (item.exists.paths.length < 1) {
       Window.alert(
         'No frames have been rendered yet.',
         SCRIPT_NAME
@@ -1119,7 +1119,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     }
 
     var aeparchive = new Aeparchives(
-      getSetting('pathcontrol_fsName'),
+      getSetting('pathcontrol_path'),
       data.item(index).compname,
       pathcontrol.getVersionString()
     );
@@ -1149,16 +1149,16 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     };
 
 
-    var currentPath = app.project.file.parent.fsName;
+    var currentPath = app.project.file.parent.absoluteURI;
     var restoredName = archived.displayName.replace(/^(\[.*\]\s)/i, '');
 
     var i = 1;
-    var newPath = currentPath + sep + restoredName + ' (restored-' + String(i) + ').aep';
+    var newPath = currentPath + '/' + restoredName + ' (restored-' + String(i) + ').aep';
     var restored = new File(newPath);
 
     while (restored.exists) {
       i++;
-      newPath = currentPath + sep + restoredName + ' (restored-' + String(i) + ').aep';
+      newPath = currentPath + '/' + restoredName + ' (restored-' + String(i) + ').aep';
       restored.changePath(newPath);
     }
 
@@ -1238,7 +1238,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         var a = data.item(index).compname;
         var b = (
           'Basepath: ' + '\'' +
-          getSetting('pathcontrol_fsName') + '\''
+          getSetting('pathcontrol_path') + '\''
         );
         var c = 'Composition: ' + data.item(index).compname;
         var d = 'Version: ' + (function() {
@@ -1288,17 +1288,6 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     var manager = new Taskmanager();
     var PIDs = manager.getPIDs();
 
-    // if (PIDs.length === 0) {
-    //   Window.alert('No background processes running.',
-    //   SCRIPT_NAME
-    // );
-    //   return;
-    // } else if (PIDs.length === 1) {
-    //   var call = manager.kill(PIDs[0]);
-    //   Window.alert(call, SCRIPT_NAME);
-    //   return;
-    // }
-
     var managerWindow = new TaskmanagerWindow(manager);
     managerWindow.show();
     return;
@@ -1332,7 +1321,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     }
     var index = listItem.selection.index;
 
-    if (data.item(index).exists.fsNames.length < 1) {
+    if (data.item(index).exists.paths.length < 1) {
       Window.alert(
         'No files have been rendered yet.',
         SCRIPT_NAME + ': Unable to import footage'
@@ -1341,7 +1330,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
     };
 
     var ffmpeg = new FFMPEG();
-    var path = data.item(index).exists.fsNames[0];
+    var path = data.item(index).exists.paths[0];
 
     try {
       importFootage(
@@ -1431,7 +1420,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       return;
     }
 
-    var fsName = getSetting('pathcontrol_fsName');
+    var rootpath = getSetting('pathcontrol_path');
 
     var omItem = data.getOutputModule(
       data.item(listItem.selection.index).rqIndex,
@@ -1455,17 +1444,16 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       );
 
       pathcontrol.setVersion(1);
-
       if (
-        fsName[fsName.length - 1] == '/' ||
-        fsName[fsName.length - 1] == '\\'
+        rootpath[rootpath.length - 1] == '/' ||
+        rootpath[rootpath.length - 1] == '\\'
       ) {
         pathcontrol.setBasepath(
-          fsName + data.item(listItem.selection.index).compname
+          rootpath + data.item(listItem.selection.index).compname
         );
       } else {
         pathcontrol.setBasepath(
-          fsName + sep + data.item(listItem.selection.index).compname
+          rootpath + '/' + data.item(listItem.selection.index).compname
         );
       }
       pathcontrol.apply(
@@ -1477,15 +1465,15 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
       );
 
       if (
-        fsName[fsName.length - 1] == '/' ||
-        fsName[fsName.length - 1] == '\\'
+        rootpath[rootpath.length - 1] == '/' ||
+        rootpath[rootpath.length - 1] == '\\'
       ) {
         pathcontrol.setBasepath(
-          fsName + data.item(listItem.selection.index).compname
+          rootpath + data.item(listItem.selection.index).compname
         );
       } else {
         pathcontrol.setBasepath(
-          fsName + sep + data.item(listItem.selection.index).compname
+          rootpath + '/' + data.item(listItem.selection.index).compname
         );
       }
       pathcontrol.apply(
@@ -1530,7 +1518,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
 
 
       if (pathcontrol.getVersion()) {
-        var fsName = getSetting('pathcontrol_fsName');
+        var fsName = getSetting('pathcontrol_path');
         if (
           fsName[fsName.length - 1] == '/' ||
           fsName[fsName.length - 1] == '\\'
@@ -1540,7 +1528,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
           );
         } else {
           pathcontrol.setBasepath(
-            fsName + sep + data.item(listItem.selection.index).compname
+            fsName + '/' + data.item(listItem.selection.index).compname
           );
         }
 

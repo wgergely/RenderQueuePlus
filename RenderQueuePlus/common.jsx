@@ -25,17 +25,6 @@ SOFTWARE.
 */
 
 
-/**
- * Platform specific separator character
- * @return {[type]} [description]
- */
-var sep = (function() {
-  if (File.fs === 'Windows') {
-    return '\\';
-  } else {
-    return '/';
-  }
-}());
 
 /**
  * After Effects helper script: returns the number of leading zeros
@@ -510,7 +499,7 @@ function catchError(e) {
     if (prop == 'number') {
       number = parseInt(e[prop]);
     } else if (prop == 'fileName') {
-      filename = new File(e[prop]).fsName;
+      filename = new File(e[prop]).absoluteURI;
     } else if (prop == 'line') {
       line = parseInt(e[prop]);
     } else if (prop == 'source') {
@@ -554,7 +543,8 @@ function catchError(e) {
 function fileNameSafeString(str) {
   return str
     .replace(/([^a-z0-9]+)/gi, '_')
-    .replace(/-{2,}/g, '_')
+    .replace(/-{1,}/gi, '_')
+    .replace(/_{1,}/gi, '_')
     .toLowerCase();
 }
 

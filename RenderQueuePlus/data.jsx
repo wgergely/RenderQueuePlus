@@ -49,7 +49,7 @@ var Data = function() {
       dataObj.exists = {
         frames: '-',
         names: ['No files rendered.'],
-        fsNames: [],
+        paths: [],
         size: formatBytes(0, 2),
         sizes: [],
         dates: [],
@@ -59,7 +59,7 @@ var Data = function() {
       dataObj.rendered = {
         frames: '-',
         names: ['No files rendered.'],
-        fsNames: [],
+        paths: [],
         size: formatBytes(0, 2),
         sizes: [],
         dates: [],
@@ -69,7 +69,7 @@ var Data = function() {
       dataObj.missing = {
         frames: '-',
         names: ['No files rendered.'],
-        fsNames: [],
+        paths: [],
         size: formatBytes(0, 2),
         sizes: [],
         dates: [],
@@ -79,7 +79,7 @@ var Data = function() {
       dataObj.incomplete = {
         frames: '-',
         names: ['No files rendered.'],
-        fsNames: [],
+        paths: [],
         size: formatBytes(0, 2),
         sizes: [],
         dates: [],
@@ -95,8 +95,9 @@ var Data = function() {
       (rqItem.comp.displayStartTime / oneframe)
     );
     dataObj.endframe = Math.round(
-        (rqItem.timeSpanStart / oneframe) +
-      (rqItem.timeSpanDuration / oneframe)
+      (rqItem.timeSpanStart / oneframe) +
+      (rqItem.timeSpanDuration / oneframe) +
+      (rqItem.comp.displayStartTime / oneframe)
     );
     dataObj.duration = Math.round(
       dataObj.endframe - dataObj.startframe
@@ -123,7 +124,7 @@ var Data = function() {
       );
     }
 
-    dataObj.basepath = omItem.file.parent.fsName;
+    dataObj.basepath = omItem.file.parent.absoluteURI;
 
 
     var re = /(\.)([a-zA-Z]{1,})$/i;
@@ -179,7 +180,7 @@ var Data = function() {
     //   dataObj.exists = {
     //     frames: '-',
     //     names: [],
-    //     fsNames: [],
+    //     paths: [],
     //     size: formatBytes(0, 2),
     //     sizes: [formatBytes(0, 2)],
     //     dates: [],
@@ -189,7 +190,7 @@ var Data = function() {
     //   dataObj.rendered = {
     //     frames: '-',
     //     names: [],
-    //     fsNames: [],
+    //     paths: [],
     //     size: formatBytes(0, 2),
     //     sizes: [formatBytes(0, 2)],
     //     dates: [],
@@ -199,7 +200,7 @@ var Data = function() {
     //   dataObj.missing = {
     //     frames: '-',
     //     names: [],
-    //     fsNames: [],
+    //     paths: [],
     //     size: formatBytes(0, 2),
     //     sizes: [formatBytes(0, 2)],
     //     dates: [],
@@ -209,7 +210,7 @@ var Data = function() {
     //   dataObj.incomplete = {
     //     frames: '-',
     //     names: [],
-    //     fsNames: [],
+    //     paths: [],
     //     size: formatBytes(0, 2),
     //     sizes: [formatBytes(0, 2)],
     //     dates: [],
@@ -226,23 +227,23 @@ var Data = function() {
 
     var notmissingNames = [];
     var notmissingFrames = [];
-    var notmissingfsNames = [];
+    var notmissingpaths = [];
     var notmissingSizes = [];
     var notmissingDates = [];
 
     var existsNames = [];
     var existsFrames = [];
-    var existsfsNames = [];
+    var existspaths = [];
     var existsSizes = [];
     var existsDates = [];
 
     var missingNames = [];
     var missingFrames = [];
-    var missingfsNames = [];
+    var missingpaths = [];
 
     var partialNames = [];
     var partialFrames = [];
-    var partialfsNames = [];
+    var partialpaths = [];
     var partialSizes = [];
     var partialDates = [];
 
@@ -266,9 +267,7 @@ var Data = function() {
       progressbar.show();
 
       for (
-        var i = dataObj.startframe;
-        i <= dataObj.duration + dataObj.startframe;
-        i++
+        var i = dataObj.startframe; i <= dataObj.duration + dataObj.startframe; i++
       ) {
         // Progress bar
         if (i % n === (n - 1)) {
@@ -278,33 +277,33 @@ var Data = function() {
 
         frame = pad(i, dataObj.padding);
         fname = name + frame + '.' + dataObj.ext;
-        fsName = omItem.file.parent.fsName + sep + fname;
+        fsName = omItem.file.parent.absoluteURI + '/' + fname;
 
         if (files.hasOwnProperty(fname)) {
           notmissingNames.push(fname);
           notmissingFrames.push(i);
-          notmissingfsNames.push(fsName);
+          notmissingpaths.push(fsName);
           notmissingSizes.push(formatBytes(files[fname].size, 2));
           notmissingDates.push(files[fname].date + ' ' + files[fname].time);
 
           if (files[fname].size > 50) {
             existsNames.push(fname);
             existsFrames.push(i);
-            existsfsNames.push(fsName);
+            existspaths.push(fsName);
             existsSizes.push(formatBytes(files[fname].size, 2));
             existsDates.push(files[fname].date + ' ' + files[fname].time);
             size += files[fname].size;
           } else {
             partialNames.push(fname);
             partialFrames.push(i);
-            partialfsNames.push(fsName);
+            partialpaths.push(fsName);
             partialSizes.push(formatBytes(files[fname].size, 2));
             partialDates.push(files[fname].date + ' ' + files[fname].time);
           }
         } else {
           missingNames.push(fname);
           missingFrames.push(i);
-          missingfsNames.push(fsName);
+          missingpaths.push(fsName);
         }
       }; // end of loop
 
@@ -315,7 +314,7 @@ var Data = function() {
       dataObj.exists = {
         frames: getRanges(notmissingFrames),
         names: notmissingNames,
-        fsNames: notmissingfsNames,
+        paths: notmissingpaths,
         size: formattedSize,
         sizes: notmissingSizes,
         dates: notmissingDates,
@@ -325,7 +324,7 @@ var Data = function() {
       dataObj.rendered = {
         frames: getRanges(existsFrames),
         names: existsNames,
-        fsNames: existsfsNames,
+        paths: existspaths,
         size: formattedSize,
         sizes: existsSizes,
         dates: existsDates,
@@ -335,7 +334,7 @@ var Data = function() {
       dataObj.missing = {
         frames: getRanges(missingFrames),
         names: missingNames,
-        fsNames: missingfsNames,
+        paths: missingpaths,
         size: formatBytes(0, 2),
         sizes: [],
         dates: [],
@@ -344,13 +343,13 @@ var Data = function() {
       dataObj.incomplete = {
         frames: getRanges(partialFrames),
         names: partialNames,
-        fsName: partialfsNames,
+        fsName: partialpaths,
         size: formatBytes(0, 2),
         sizes: partialSizes,
         dates: partialDates,
         count: partialNames.length,
       };
-    // Movies
+      // Movies
     } else {
       name = (
         decodeURI(omItem.file.name).slice(
@@ -361,38 +360,38 @@ var Data = function() {
 
       frame = 1;
       fname = decodeURI(omItem.file.name);
-      fsName = omItem.file.parent.fsName + sep + fname;
+      fsName = omItem.file.parent.absoluteURI + '/' + fname;
       if (files.hasOwnProperty(fname)) {
         notmissingNames.push(fname);
         notmissingFrames.push(frame);
-        notmissingfsNames.push(fsName);
+        notmissingpaths.push(fsName);
         notmissingSizes.push(formatBytes(files[fname].size, 2));
         notmissingDates.push(files[fname].date + ' ' + files[fname].time);
         if (files[fname].size > 50) {
           existsNames.push(fname);
           existsFrames.push(frame);
-          existsfsNames.push(fsName);
+          existspaths.push(fsName);
           existsSizes.push(formatBytes(files[fname].size, 2));
           existsDates.push(files[fname].date + ' ' + files[fname].time);
           size += files[fname].size;
         } else {
           partialNames.push(fname);
           partialFrames.push(frame);
-          partialfsNames.push(fsName);
+          partialpaths.push(fsName);
           partialSizes.push(formatBytes(files[fname].size, 2));
           partialDates.push(files[fname].date + ' ' + files[fname].time);
         }
       } else {
         missingNames.push(fname);
         missingFrames.push(frame);
-        missingfsNames.push(fsName);
+        missingpaths.push(fsName);
       }
 
       formattedSize = formatBytes(size, 2);
       dataObj.exists = {
         frames: 1,
         names: notmissingNames,
-        fsNames: notmissingfsNames,
+        paths: notmissingpaths,
         size: formattedSize,
         sizes: notmissingSizes,
         dates: notmissingDates,
@@ -402,7 +401,7 @@ var Data = function() {
       dataObj.rendered = {
         frames: getRanges(existsFrames),
         names: existsNames,
-        fsNames: existsfsNames,
+        paths: existspaths,
         size: formattedSize,
         sizes: existsSizes,
         dates: existsDates,
@@ -412,7 +411,7 @@ var Data = function() {
       dataObj.missing = {
         frames: getRanges(missingFrames),
         names: missingNames,
-        fsNames: missingfsNames,
+        paths: missingpaths,
         size: formatBytes(0, 2),
         sizes: [],
         dates: [],
@@ -422,7 +421,7 @@ var Data = function() {
       dataObj.incomplete = {
         frames: getRanges(partialFrames),
         names: partialNames,
-        fsName: partialfsNames,
+        fsName: partialpaths,
         size: formatBytes(0, 2),
         sizes: partialSizes,
         dates: partialDates,
@@ -458,11 +457,11 @@ var Data = function() {
 
     this.setData = function(idx) {
       /**
-      * Private convenience function
-      * @param {number} i rqIndex
-      * @param {number} j omIndex
-      * @return {object} dataObj
-      */
+       * Private convenience function
+       * @param {number} i rqIndex
+       * @param {number} j omIndex
+       * @return {object} dataObj
+       */
       function setDataObj(i, j) {
         var ffmpeg;
         var rqItem = app.project.renderQueue.item(i);
@@ -472,7 +471,7 @@ var Data = function() {
         dataObj.projectName = app.project.name;
 
         if (!(omItem.file)) {
-          var fsName = getSetting('pathcontrol_fsName');
+          var fsName = getSetting('pathcontrol_path');
           omItem.file = new File(fsName + '/tempOutput');
         }
 
@@ -508,7 +507,7 @@ var Data = function() {
         dataObj.isSequence = function() {
           if (dataObj.file) {
             ffmpeg = new FFMPEG();
-            return ffmpeg.isSequence(omItem.file.fsName);
+            return ffmpeg.isSequence(omItem.file.absoluteURI);
           } else {
             return null;
           }
@@ -531,7 +530,7 @@ var Data = function() {
         dataObj.exists = {
           frames: null,
           names: null,
-          fsNames: null,
+          paths: null,
           size: null,
           sizes: null,
           dates: null,
@@ -541,7 +540,7 @@ var Data = function() {
         dataObj.rendered = {
           frames: null,
           names: null,
-          fsNames: null,
+          paths: null,
           size: null,
           sizes: null,
           dates: null,
@@ -551,7 +550,7 @@ var Data = function() {
         dataObj.missing = {
           frames: null,
           names: null,
-          fsNames: null,
+          paths: null,
           size: null,
           sizes: null,
           dates: null,
@@ -655,7 +654,7 @@ var Data = function() {
       var returnObj = {
         frames: [],
         names: [],
-        fsNames: [],
+        paths: [],
         sizes: [],
         counts: [],
       };
@@ -666,7 +665,7 @@ var Data = function() {
         for (var i = 0; i < keys.length; i++) {
           returnObj.frames.push(DATA[i].rendered.frames);
           returnObj.names.push(DATA[i].rendered.names);
-          returnObj.fsNames.push(DATA[i].rendered.fsNames);
+          returnObj.paths.push(DATA[i].rendered.paths);
           returnObj.sizes.push(DATA[i].rendered.size);
           returnObj.counts.push(DATA[i].rendered.count);
         }
@@ -683,7 +682,7 @@ var Data = function() {
       var returnObj = {
         frames: [],
         names: [],
-        fsNames: [],
+        paths: [],
         counts: [],
       };
 
@@ -693,7 +692,7 @@ var Data = function() {
         for (var i = 0; i < keys.length; i++) {
           returnObj.frames.push(DATA[i].missing.frames);
           returnObj.names.push(DATA[i].missing.names);
-          returnObj.fsNames.push(DATA[i].missing.fsNames);
+          returnObj.paths.push(DATA[i].missing.paths);
           returnObj.counts.push(DATA[i].missing.count);
         }
         return returnObj;
@@ -709,17 +708,17 @@ var Data = function() {
       var returnObj = {
         frames: [],
         names: [],
-        fsNames: [],
+        paths: [],
         counts: [],
       };
 
-    if (isObjectEmpty(DATA)) {
+      if (isObjectEmpty(DATA)) {
         return returnObj;
       } else {
         for (var i = 0; i < keys.length; i++) {
           returnObj.frames.push(DATA[i].incomplete.frames);
           returnObj.names.push(DATA[i].incomplete.names);
-          returnObj.fsNames.push(DATA[i].incomplete.fsNames);
+          returnObj.paths.push(DATA[i].incomplete.paths);
           returnObj.counts.push(DATA[i].incomplete.count);
         }
         return returnObj;
@@ -735,7 +734,7 @@ var Data = function() {
       var returnObj = {
         frames: [],
         names: [],
-        fsNames: [],
+        paths: [],
         counts: [],
       };
 
@@ -745,7 +744,7 @@ var Data = function() {
         for (var i = 0; i < keys.length; i++) {
           returnObj.frames.push(DATA[i].exists.frames);
           returnObj.names.push(DATA[i].exists.names);
-          returnObj.fsNames.push(DATA[i].exists.fsNames);
+          returnObj.paths.push(DATA[i].exists.paths);
           returnObj.counts.push(DATA[i].exists.count);
         }
         return returnObj;

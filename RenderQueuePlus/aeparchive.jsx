@@ -41,9 +41,9 @@ var Aeparchives = function() {
       try {
         var dir = new Folder(a);
         if (dir.exists) {
-          return dir.fsName;
+          return dir.absoluteURI;
         } else {
-          return Folder.desktop.fsName;
+          return Folder.desktop.absoluteURI;
         }
       } catch (e) {
         catchError(e);
@@ -58,8 +58,7 @@ var Aeparchives = function() {
       try {
         var arr = [];
         var dir = new Folder(
-          cls.basepath + sep +
-          DEFAULT_BASE
+          cls.basepath + '/' + DEFAULT_BASE
         );
 
         var files = dir.getFiles();
@@ -76,9 +75,9 @@ var Aeparchives = function() {
 
     this.getPath = function() {
       try {
-        var s = cls.basepath + sep +
-        DEFAULT_BASE + sep +
-        cls.compname + sep +
+        var s = cls.basepath + '/' +
+        DEFAULT_BASE + '/' +
+        cls.compname + '/' +
         cls.version;
         return s;
       } catch (e) {
@@ -108,7 +107,7 @@ var Aeparchives = function() {
 
     this.getArchivePath = function() {
       try {
-        var s = cls.getPath() + sep + cls.getProjectName();
+        var s = cls.getPath() + '/' + cls.getProjectName();
         return s;
       } catch (e) {
         catchError(e);

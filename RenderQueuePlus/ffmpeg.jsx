@@ -2,7 +2,7 @@ var FFMPEG = function() {
   var re = /(dpx)|(gif)|(jpg)|(targa)|(tga)|(sgi)|(tiff)|(tif)|(png)|(exr)|(psd)/gi;
 
   var ffmpeg_cmd = '"[ffmpeg]" -y -hide_banner -loglevel info -f image2 -framerate [framerate] -s [width]x[height]' +
-  ' -i "[basepath]' + sep + '[basename][padding].[ext]" [frameoverlay] -start_number [start]' +
+  ' -i "[basepath]' + '/' + '[basename][padding].[ext]" [frameoverlay] -start_number [start]' +
   ' -frames:v [duration] [customOptions] "[output]"';
 
   var ffmpeg_overlay = '-vf "drawtext=fontfile=/Windows/Fonts/Arial.ttf: text=[text]%%{eif\\\\:n+[start]\\\\:d}: x=(w-tw)/2: y=h-(2*lh): fontcolor=white: box=1: boxcolor=0x00000099"';

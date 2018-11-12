@@ -26,55 +26,47 @@ SOFTWARE.
 
 
 /**
-* Module is responsible for setting the output path
-* @type {outputModule} omItem - the current output module
+* Module is responsible for setting the output path of the given Output Module.
+* @type {outputModule} omItem:          The current output module.
 */
 var Pathcontrol = function() {
-  var props = {};
+  // Object to store our settings
+  var om_properties = {};
 
-  props.extension = null;
-  props.customsuffix = null;
+  om_properties.extension = null;
+  om_properties.customsuffix = null;
 
-  props.versionString = function() {
-    return 'v' + pad(props.version, 3);
+  om_properties.versionString = function() {
+    return 'v' + pad(om_properties.version, 3);
   };
 
-  props.paddingString = function() {
-    if (props.padding == 0) {
+  om_properties.paddingString = function() {
+    if (om_properties.padding == 0) {
       return '';
-    };
-    if (props.padding == 1) {
-      return '[#]';
-    };
-    if (props.padding == 2) {
-      return '[##]';
-    };
-    if (props.padding == 3) {
-      return '[###]';
-    };
-    if (props.padding == 4) {
-      return '[####]';
-    };
-    if (props.padding == 5) {
-      return '[#####]';
-    };
+    } else {
+      return '[' + Array(om_properties.padding + 1).join('#') + ']';
+    }
   };
-  props.version = null;
-  props.padding = null;
-  props.basepath = null;
-  props.template = null;
 
-  props.om = function() {
+  om_properties.version = null;
+  om_properties.padding = null;
+  om_properties.basepath = null;
+  om_properties.template = null;
+
+  om_properties.om = function() {
     return ({
       'Output File Info': {
-        'Base Path': props.basepath,
-        'File Template': props.template,
+        'Base Path': om_properties.basepath,
+        'File Template': om_properties.template,
       },
     });
   };
 
 
   var cls = function() {
+    /*
+    Takes an Output Module as an argument and expands its settings.
+     */
     this.initFromOutputModule = function(omItem) {
       var settings = omItem.getSettings(GetSettingsFormat.STRING_SETTABLE);
       var template = settings['Output File Info']['File Template'];
@@ -84,8 +76,8 @@ var Pathcontrol = function() {
       if (!padding) {
         padding = 0;
       }
-      props.padding = padding;
-      props.version = version;
+      om_properties.padding = padding;
+      om_properties.version = version;
 
       var returnObj = {};
       returnObj.padding = padding;
@@ -94,25 +86,25 @@ var Pathcontrol = function() {
     };
 
     this.setVersion = function(inNum) {
-      props.version = inNum;
-      return props.version;
+      om_properties.version = inNum;
+      return om_properties.version;
     };
 
     this.setBasepath = function(inString) {
-      props.basepath = inString;
-      return props.basepath;
+      om_properties.basepath = inString;
+      return om_properties.basepath;
     };
 
     this.getVersionString = function() {
-      return 'v' + pad(props.version, 3);
+      return 'v' + pad(om_properties.version, 3);
     };
 
     this.getVersion = function() {
-      return props.version;
+      return om_properties.version;
     };
 
     this.getPadding = function() {
-      return props.padding;
+      return om_properties.padding;
     };
 
     this.getVersions = function() {
@@ -120,11 +112,11 @@ var Pathcontrol = function() {
       var subFolders;
       var versionFolders = [];
 
-      if (!props.basepath) {
+      if (!om_properties.basepath) {
         return versionFolders;
       }
 
-      baseFolder = new Folder(props.basepath);
+      baseFolder = new Folder(om_properties.basepath);
 
       if (!baseFolder.exists) {
         return versionFolders;
@@ -157,9 +149,9 @@ var Pathcontrol = function() {
 
       var foldersOK = false;
 
-      if (getSetting('pathcontrol_fsName')) {
+      if (getSetting('pathcontrol_path')) {
         var rendersBase = new Folder(
-          getSetting('pathcontrol_fsName')
+          getSetting('pathcontrol_path')
         );
         try {
           rendersBase.create();
@@ -179,23 +171,23 @@ var Pathcontrol = function() {
       }
 
       if (foldersOK) {
-        if (props.padding > 0) {
-          props.template = (
-            props.versionString() + '/' + fileNameSafeString(rqItem.comp.name) + '_' +
-            props.versionString() + '_' +
-            props.paddingString() + '.[fileExtension]'
+        if (om_properties.padding > 0) {
+          om_properties.template = (
+            om_properties.versionString() + '/' + fileNameSafeString(rqItem.comp.name) + '_' +
+            om_properties.versionString() + '_' +
+            om_properties.paddingString() + '.[fileExtension]'
           );
         }
-        if (props.padding == 0) {
-          props.template = (
-            props.versionString() + '/' + fileNameSafeString(rqItem.comp.name) + '_' +
-            props.versionString() + '.[fileExtension]'
+        if (om_properties.padding == 0) {
+          om_properties.template = (
+            om_properties.versionString() + '/' + fileNameSafeString(rqItem.comp.name) + '_' +
+            om_properties.versionString() + '.[fileExtension]'
           );
         }
       }
 
       try {
-        omItem.setSettings(props.om());
+        omItem.setSettings(om_properties.om());
       } catch (e) {
         var text = 'Sorry, unable to set output module path.';
         text += '\n\nMake sure the module is queued and ready';
