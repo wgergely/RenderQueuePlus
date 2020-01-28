@@ -94,15 +94,16 @@ var Data = function() {
       (rqItem.timeSpanStart / oneframe) +
       (rqItem.comp.displayStartTime / oneframe)
     );
-    dataObj.endframe = Math.round(
-      (rqItem.timeSpanStart / oneframe) +
-      (rqItem.timeSpanDuration / oneframe) +
-      (rqItem.comp.displayStartTime / oneframe)
-    );
-    dataObj.duration = Math.round(
-      dataObj.endframe - dataObj.startframe
-    );
-    dataObj.framerate = (1 / rqItem.comp.frameDuration);
+    dataObj.duration = Math.round(rqItem.timeSpanDuration / oneframe);
+    dataObj.endframe = dataObj.startframe + dataObj.duration - 1;
+    dataObj.framerate = (1.0 / rqItem.comp.frameDuration);
+
+    // alert(
+    //   'Startframe: ' + String(dataObj.startframe) + '\n' +
+    //   'endframe: ' + String(dataObj.endframe),
+    //   'Debug'
+    // )
+
     dataObj.width = rqItem.comp.width;
     dataObj.height = rqItem.comp.height;
 
@@ -172,53 +173,6 @@ var Data = function() {
       files = dir.getFiles(omItem.file.displayName);
     }
 
-    // Error
-    // if (
-    //   files.hasOwnProperty('Invalid path.') ||
-    //   files.hasOwnProperty('Error.')
-    // ) {
-    //   dataObj.exists = {
-    //     frames: '-',
-    //     names: [],
-    //     paths: [],
-    //     size: formatBytes(0, 2),
-    //     sizes: [formatBytes(0, 2)],
-    //     dates: [],
-    //     count: 0,
-    //   };
-    //
-    //   dataObj.rendered = {
-    //     frames: '-',
-    //     names: [],
-    //     paths: [],
-    //     size: formatBytes(0, 2),
-    //     sizes: [formatBytes(0, 2)],
-    //     dates: [],
-    //     count: 0,
-    //   };
-    //
-    //   dataObj.missing = {
-    //     frames: '-',
-    //     names: [],
-    //     paths: [],
-    //     size: formatBytes(0, 2),
-    //     sizes: [formatBytes(0, 2)],
-    //     dates: [],
-    //     count: 0,
-    //   };
-    //
-    //   dataObj.incomplete = {
-    //     frames: '-',
-    //     names: [],
-    //     paths: [],
-    //     size: formatBytes(0, 2),
-    //     sizes: [formatBytes(0, 2)],
-    //     dates: [],
-    //     count: 0,
-    //   };
-    //
-    //   return dataObj;
-    // } // error
 
     var frame;
     var name = '';
@@ -263,11 +217,11 @@ var Data = function() {
         )
       );
       var progressbar = new PBar(dataObj.duration + dataObj.startframe);
-      var n = 100;
+      var n = 13;
       progressbar.show();
 
       for (
-        var i = dataObj.startframe; i <= dataObj.duration + dataObj.startframe; i++
+        var i = dataObj.startframe; i <= dataObj.endframe; i++
       ) {
         // Progress bar
         if (i % n === (n - 1)) {

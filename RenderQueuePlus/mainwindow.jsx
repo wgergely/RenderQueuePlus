@@ -608,19 +608,19 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         var missingCount = data.item(index).missing.count;
         var duration = data.item(index).duration;
 
-        if ((renderedCount === duration + 1) && (incompleteCount === 0)) {
+        if ((renderedCount === duration) && (incompleteCount === 0)) {
           return ICON_FILES.greenIcon;
         }
-        if ((renderedCount === duration + 1) && (incompleteCount > 0)) {
+        if ((renderedCount === duration) && (incompleteCount > 0)) {
           return ICON_FILES.orangeIcon;
         }
-        if ((renderedCount < duration + 1) && (renderedCount > 0)) {
+        if ((renderedCount < duration) && (renderedCount > 0)) {
           return ICON_FILES.orangeIcon;
         }
         if (incompleteCount > 0) {
           return ICON_FILES.orangeIcon;
         }
-        if (missingCount === duration + 1) {
+        if (missingCount === duration) {
           return ICON_FILES.redIcon;
         }
         return ICON_FILES.grayIcon;
@@ -741,7 +741,7 @@ var MainWindow = function(thisObj, inTitle, inNumColumns, columnTitles, columnWi
         return;
       };
 
-      var duration = data.item(listItem.selection.index).duration + 1;
+      var duration = data.item(listItem.selection.index).duration;
       var renderedCount = data.item(listItem.selection.index).rendered.count;
       if (duration != renderedCount) {
         Window.alert(
