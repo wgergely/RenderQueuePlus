@@ -26,8 +26,6 @@ SOFTWARE.
 
 
 (function(thisObj) {
-  var LICENSED = false;
-
   if (!(File.fs == 'Windows')) {
     Window.alert(
       'Sorry, this currently only works on Windows :(\n' +
@@ -53,32 +51,6 @@ SOFTWARE.
   // @include "aeparchive.jsx"
   // @include "taskmanager.jsx"
   // @include "taskmanagerUI.jsx"
-
-  // Licensing
-  try {
-    // @include "license.jsx"
-    var llic = new LOCAL_LICENCE();
-    var licence_win;
-    if (llic.exists) {
-      var licensee = llic.read();
-      var glic = new GUMROAD_LICENCE(licensee[0], licensee[1]);
-      if (!glic.verify()) {
-        licence_win = new ENTER_LICENCE();
-        licence_win.show();
-      } else {
-        LICENSED = true;
-      }
-    } else {
-      licence_win = new ENTER_LICENCE();
-      licence_win.show();
-    }
-  } catch (e) {
-    catchError(e);
-  }
-
-  if (!LICENSED) {
-    return;
-  }
 
   // Module globals
   var settings = new Settings();
