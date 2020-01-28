@@ -33,7 +33,7 @@ SOFTWARE.
  */
 function getPadding(n) {
   var e = decodeURI(n).match(
-    /\[#\]|\[##\]|\[###\]|\[####\]|\[#####\]|\[######\]/g
+    /\[[#]+\]/g
   );
   return e ? e[0].length - 2 : null;
 }
