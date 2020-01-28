@@ -55,18 +55,6 @@ function setSetting(keyName, value) {
 };
 
 
-/**
- * Returns the path for aerender
- * @param  {string} version After Effects version, eg. 'CC 2018'
- * @return {string}         the path for aerender.exe
- */
-function getAerenderPath(version) {
-  var path = 'C:\\Program Files\\Adobe\\';
-  path += 'Adobe After Effects <version>\\Support Files\\aerender.exe';
-  path = path.replace('<version>', version);
-  return path;
-}
-
 
 /**
  * Settings module.
@@ -75,18 +63,6 @@ function getAerenderPath(version) {
  * specific to the panel into After Effects.
  */
 var Settings = function(thisObj) {
-  var AE_RENDER_PATHS = {
-    'CC 2020': getAerenderPath('CC 2020'),
-    'CC 2019': getAerenderPath('CC 2019'),
-    'CC 2018': getAerenderPath('CC 2018'),
-    'CC 2017': getAerenderPath('CC 2017'),
-    'CC 2015.3': getAerenderPath('CC 2015.3'),
-    'CC 2015': getAerenderPath('CC 2015'),
-    'CC 2014': getAerenderPath('CC 2014'),
-    'CC': getAerenderPath('CC'),
-    'CS6': getAerenderPath('CS6'),
-  };
-
   var settings = {};
   var settingsPalette;
 
@@ -587,29 +563,8 @@ var Settings = function(thisObj) {
           }
         }
 
-        var version = parseFloat(app.version);
-        var string;
-
-        if (version >= 16 && version < 16.5) {
-          aerender.changePath(AE_RENDER_PATHS['CC 2020']);
-        } else if (version >= 15.5 && version < 16) {
-          aerender.changePath(AE_RENDER_PATHS['CC 2019']);
-        } else if (version >= 15 && version < 15.5) {
-          aerender.changePath(AE_RENDER_PATHS['CC 2018']);
-        } else if (version >= 14 && version < 14.3) {
-          aerender.changePath(AE_RENDER_PATHS['CC 2017']);
-        } else if (version >= 13.8 && version < 14) {
-          aerender.changePath(AE_RENDER_PATHS['CC 2015.3']);
-        } else if (version >= 13.5 && version < 13.8) {
-          aerender.changePath(AE_RENDER_PATHS['CC 2015']);
-        } else if (version >= 13 && version < 13.5) {
-          aerender.changePath(AE_RENDER_PATHS['CC 2014']);
-        } else if (version >= 12 && version < 12.3) {
-          aerender.changePath(AE_RENDER_PATHS['CC']);
-        } else if (version >= 11 && version < 11.1) {
-          aerender.changePath(AE_RENDER_PATHS['CS6']);
-        };
-
+        aerender.changePath(File.decode(Folder.startup.absoluteURI + '/aerender.exe'));
+        
         if (aerender.exists) {
           string = aerender.fsName;
         } else {
