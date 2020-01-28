@@ -54,7 +54,7 @@ var renderQueuePlus = this;
   if (!(MODULE_DIR.exists)) {
     alertString += '\'' + MODULE_DIR.displayName + '\' folder is missing.\n';
     alertString += 'Make sure it is placed in the same folder ' +
-    'as the \'RenderQueue+.jsxbin\' file.';
+      'as the \'RenderQueue+.jsxbin\' file.';
     Window.alert(alertString, SCRIPT_NAME);
     return;
   }
@@ -65,7 +65,11 @@ var renderQueuePlus = this;
     f.write('RQ+ write permission test');
     f.close();
     f.remove();
+    // This is where the main submodule is called. This is an ExtendScript
+    // specific syntax that deviates from normal JavaScript behaviour.
+
     // @include "RenderQueuePlus/main.jsx"
+    
   } catch (e) {
     alertString += 'The script doesn\'t have permission to run.\n\n';
     alertString += 'Make sure \'Allow Scripts to Write Files and Access Network\' is ticked in\n';
