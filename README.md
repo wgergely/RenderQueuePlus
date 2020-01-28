@@ -32,8 +32,6 @@ C:\Program Files\Adobe\Adobe After Effects CC 2018\Support Files\Scripts\ScriptU
 
 After restarting After Effects you should see a 'RenderQueue+.jsxbin' menu-item at the bottom of the 'Window' menu.
 
-On first the first launch, you will be prompted to enter the email address used for the purchase and the licence key you received from Gumroad. Check your email if you don't have it!
-
 ## Features
 
 ##### Background and Network Rendering

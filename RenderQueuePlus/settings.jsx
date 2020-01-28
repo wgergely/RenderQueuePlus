@@ -564,7 +564,7 @@ var Settings = function(thisObj) {
         }
 
         aerender.changePath(File.decode(Folder.startup.absoluteURI + '/aerender.exe'));
-        
+
         if (aerender.exists) {
           string = aerender.fsName;
         } else {
@@ -1052,24 +1052,6 @@ var Settings = function(thisObj) {
         openLink('http://gergely-wootsch.com/renderqueueplus');
       };
 
-      var setLicence = aboutGroup1.add(
-        'button',
-        undefined,
-        'Licence', {
-          name: 'aboutWebsite',
-        }
-      );
-      setLicence.size = [75, 15];
-      setLicence.onClick = function() {
-        try {
-          var llic = new LOCAL_LICENCE();
-          var licensee = llic.read();
-          var licence_win = new ENTER_LICENCE();
-          licence_win.show(licensee);
-        } catch (e) {
-          catchError(e);
-        };
-      };
 
       var aboutReadme = aboutGroup1.add(
         'button',
