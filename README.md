@@ -7,34 +7,33 @@ The panel loosely integrates with ***Shotgun's RV*** that can be used for review
 
 ## Limitations
 
-* **The script does not support Mac OS**.
-Please send me an email if you'd like to see this change.
-* The versioning pattern is hard-coded and there's no way to customize it.
-* FFmpeg output could do with more presets.
-* Panel has been tested but bugs are possible.
-It would be greatly appreciated if you reported any that you spot.
+* **The script does not support Mac OS at the moment.**.
+* The versioning pattern is hard-coded and there's no way to customize as things stand. I hope to add custom templates in the future
+* FFmpeg output could do with presets
+* Panel has been tested but bugs are possible
+
 
 ## Installation
 
 
-Place the **RenderQueue+.jsxbin** and the **RenderQueuePlus** folder into the **ScriptUI Panels** folder.
+Place **both** the **RenderQueue+.jsx** file _**and**_ the **RenderQueuePlus** folder into After Effect's **ScriptUI Panels** folder.
 
 ```
-ScriptUI Panels\RenderQueue+.jsxbin
+ScriptUI Panels\RenderQueue+.jsxb
 ScriptUI Panels\RenderQueuePlus\
 ```
 
-It's located here (replace 'CC 2018' with your After Effects version name):
+It's located usually here (replace [Your Version] with the After Effects version you have):
 
 ```
-C:\Program Files\Adobe\Adobe After Effects CC 2018\Support Files\Scripts\ScriptUI Panels
+C:\Program Files\Adobe\Adobe After Effects [Your Version]\Support Files\Scripts\ScriptUI Panels
 ```
 
-After restarting After Effects you should see a 'RenderQueue+.jsxbin' menu-item at the bottom of the 'Window' menu.
+After restarting After Effects you should see a 'RenderQueue+.jsx' menu-item at the bottom of the 'Window' menu.
 
 ## Features
 
-##### Background and Network Rendering
+##### Background (and batch rendering)
 
 RenderQueue+ can render output modules in the background so you don't have to stop work to wait for renders to complete.
 You can also make a batch file that can be launched across multiple computers on a network. This might sometimes be handy for small studios or individuals where a render-farm solution is not available.
@@ -60,24 +59,25 @@ We can point to the ***renders*** folder by entering the following in Settings:
 ././renders
 ```
 
-The output path will be set once we select 'Set Version Control' for the item. Simple!
+The output path will be set once we select 'Set Version Control' for the item. Simple, albeit arguably somewhat limited in its
+current form.
 
 
 ##### RV
 
-If you're a Deadline/RV user you can call RV from the panel to review your rendered files in RV.
-There's also an option to specify custom switches.
+If you're a Shotgun/RV user you can call RV from the RenderQueue+ to review your rendered files.
 
 
 ##### Frame Manager
 
-You can delete rendered images (or movies) from the app via the Frame Manager.
-Here you can filter your files by sequence patterns, eg you can enter in the filter box '1-20, 30-40' displaying only frames 1-20 and 30-40. This makes it easy to remove specific image-ranges if you need to re-render only a section of your comp.
+You can delete rendered images (or movies) from the app via the RenderQueue+'s Frame Manager.
+Here you can filter your files by sequence patterns, eg. entering in the filter box '1-20, 30-40' will display only frames 1-20 and 30-40. This makes it easy to remove specific image-ranges if you need to re-render only a section of your comp.
 
 
 ##### Restore project used to render the given version
 
 The panel automatically archives a copy of your comp when you start a render: this means, you can always refer back to the project used to render a given version.
+
 
 ## Tips
 
